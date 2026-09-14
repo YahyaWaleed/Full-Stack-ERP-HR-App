@@ -93,7 +93,7 @@ public class LeaveRequestService {
     // cancel a leave request
     @Transactional
     public void cancelRequest(Long id) {
-        LeaveRequest leaveRequest = leaveRequestRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Leave Request not found", id));
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Leave Request", id));
         if (leaveRequest.getStatus() != LeaveRequest.LeaveStatus.PENDING) {
             throw new ConflictException("Leave request status must be set to PENDING before cancelling it");
         }

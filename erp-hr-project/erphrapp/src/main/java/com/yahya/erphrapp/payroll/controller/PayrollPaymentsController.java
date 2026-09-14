@@ -3,6 +3,7 @@ package com.yahya.erphrapp.payroll.controller;
 import com.yahya.erphrapp.payroll.dto.PayrollPaymentsResponse;
 import com.yahya.erphrapp.payroll.service.PayrollPaymentsService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@PreAuthorize("hasRole('HR_ADMIN')")
 @RequestMapping("/api")
 @RestController
 public class PayrollPaymentsController {

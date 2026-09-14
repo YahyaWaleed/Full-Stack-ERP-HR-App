@@ -54,7 +54,7 @@ public class EmployeeService {
     // create an employee
     public EmployeeResponse createEmployee(EmployeeRequest employeeRequest, EmployeeContractRequest employeeContractRequest) {
         Branch branch = branchRepository.findById(employeeRequest.getBranchId()).orElseThrow(() -> new ResourceNotFoundException("Branch",employeeRequest.getBranchId()));
-        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Departmetn" , employeeRequest.getDeptId()));
+        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Department" , employeeRequest.getDeptId()));
         JobTitle title = jobTitleRepository.findById(employeeRequest.getJobId()).orElseThrow(() -> new ResourceNotFoundException("Job Title", employeeRequest.getJobId()));
 
         Employee manager = null;
@@ -166,7 +166,7 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", id));
 
         Branch branch = branchRepository.findById(employeeRequest.getBranchId()).orElseThrow(() -> new ResourceNotFoundException("Branch",employeeRequest.getBranchId()));
-        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Departmetn" , employeeRequest.getDeptId()));
+        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Department" , employeeRequest.getDeptId()));
         JobTitle title = jobTitleRepository.findById(employeeRequest.getJobId()).orElseThrow(() -> new ResourceNotFoundException("Job Title", employeeRequest.getJobId()));
 
         Employee manager = null;
