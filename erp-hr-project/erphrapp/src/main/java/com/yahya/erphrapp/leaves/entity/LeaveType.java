@@ -36,7 +36,7 @@ public class LeaveType {
     private boolean requiresAttachment;
 
     public enum GenderRestriction {
-        ANY, M, F
+        ANY, M, FEMALE, MALE, F
     }
 
     @Enumerated(EnumType.STRING)
