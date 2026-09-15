@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ErphrappApplication {
 
 	public static void main(String[] args) {
+		System.out.println("DB_PASSWORD is: [" + System.getenv("DB_PASSWORD") + "]");
 		SpringApplication.run(ErphrappApplication.class, args);
 	}
-
 }

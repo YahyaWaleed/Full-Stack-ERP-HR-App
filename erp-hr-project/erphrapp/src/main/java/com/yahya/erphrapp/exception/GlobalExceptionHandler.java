@@ -1,6 +1,8 @@
 package com.yahya.erphrapp.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -31,10 +33,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Invalid request", req, errors);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest req) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", ex.getMessage(), req, null);
-    }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String code, String msg,
                                                 HttpServletRequest req, List<String> fieldErrors) {
@@ -52,6 +50,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleBadEnum(Exception ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "INVALID_VALUE", "Invalid value in request body — check enum fields", req, null);
+    }
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest req) {
+        log.error("Unhandled exception on {}: {}", req.getRequestURI(), ex.getMessage(), ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", ex.getMessage(), req, null);
     }
 }
 
