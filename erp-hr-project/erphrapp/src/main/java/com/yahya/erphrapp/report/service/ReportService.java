@@ -1,11 +1,9 @@
 package com.yahya.erphrapp.report.service;
 
 import com.yahya.erphrapp.report.dto.*;
-//import com.yahya.erphrapp.report.repository.ReportRepository;
+import com.yahya.erphrapp.report.repository.ReportRepository;
+import jakarta.persistence.Tuple;
 import org.springframework.stereotype.Service;
-import  com.yahya.erphrapp.report.repository.ReportRepository;
-
-import com.yahya.erphrapp.report.dto.EmployeeDirectoryResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,236 +18,242 @@ public class ReportService {
         this.reportRepository = reportRepository;
     }
 
+    private LocalDate localDate(Tuple t, String col) {
+        Object v = t.get(col);
+        if (v == null) return null;
+        if (v instanceof LocalDate ld) return ld;
+        if (v instanceof java.sql.Date d) return d.toLocalDate();
+        throw new IllegalStateException("Unexpected date type for column " + col + ": " + v.getClass());
+    }
+
     public List<EmployeeDirectoryResponse> getEmployeeDirectory() {
-        return reportRepository.getEmployeeDirectory().stream().map(r -> {
+        return reportRepository.getEmployeeDirectory().stream().map(t -> {
             EmployeeDirectoryResponse d = new EmployeeDirectoryResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setFullNameEn((String) r[2]);
-            d.setGender(String.valueOf(r[3]));
-            d.setAge(((Number) r[4]).intValue());
-            d.setDepartment((String) r[5]);
-            d.setJobTitle((String) r[6]);
-            d.setJobGrade((String) r[7]);
-            d.setBranch((String) r[8]);
-            d.setManager((String) r[9]);
-            d.setHireDate((LocalDate) r[10]);
-            d.setYearsOfService(((Number) r[11]).intValue());
-            d.setEmpStatus((String) r[12]);
-            d.setContractType((String) r[13]);
-            d.setBasicSalary((BigDecimal) r[14]);
-            d.setEmail((String) r[15]);
-            d.setMobile((String) r[16]);
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setFullNameEn(t.get("full_name_en", String.class));
+            d.setGender(String.valueOf(t.get("gender")));
+            d.setAge(((Number) t.get("age")).intValue());
+            d.setDepartment(t.get("department", String.class));
+            d.setJobTitle(t.get("job_title", String.class));
+            d.setJobGrade(t.get("job_grade", String.class));
+            d.setBranch(t.get("branch", String.class));
+            d.setManager(t.get("manager", String.class));
+            d.setHireDate(localDate(t, "hire_date"));
+            d.setYearsOfService(((Number) t.get("years_of_service")).intValue());
+            d.setEmpStatus(t.get("emp_status", String.class));
+            d.setContractType(t.get("contract_type", String.class));
+            d.setBasicSalary(t.get("basic_salary", BigDecimal.class));
+            d.setEmail(t.get("email", String.class));
+            d.setMobile(t.get("mobile", String.class));
             return d;
         }).toList();
     }
 
     public List<HeadcountByDeptResponse> getHeadcountByDept() {
-        return reportRepository.getHeadcountByDept().stream().map(r -> {
+        return reportRepository.getHeadcountByDept().stream().map(t -> {
             HeadcountByDeptResponse d = new HeadcountByDeptResponse();
-            d.setCode((String) r[0]);
-            d.setDepartment((String) r[1]);
-            d.setBranch((String) r[2]);
-            d.setHeadcount(((Number) r[3]).longValue());
-            d.setMales(((Number) r[4]).longValue());
-            d.setFemales(((Number) r[5]).longValue());
-            d.setAvgServiceYears((BigDecimal) r[6]);
-            d.setAvgBasicSalary((BigDecimal) r[7]);
+            d.setCode(t.get("code", String.class));
+            d.setDepartment(t.get("department", String.class));
+            d.setBranch(t.get("branch", String.class));
+            d.setHeadcount(((Number) t.get("headcount")).longValue());
+            d.setMales(((Number) t.get("males")).longValue());
+            d.setFemales(((Number) t.get("females")).longValue());
+            d.setAvgServiceYears(t.get("avg_service_years", BigDecimal.class));
+            d.setAvgBasicSalary(t.get("avg_basic_salary", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<PayrollRegisterResponse> getPayrollRegister(String periodCode) {
-        return reportRepository.getPayrollRegister(periodCode).stream().map(r -> {
+        return reportRepository.getPayrollRegister(periodCode).stream().map(t -> {
             PayrollRegisterResponse d = new PayrollRegisterResponse();
-            d.setPayslipId(((Number) r[0]).longValue());
-            d.setPayslipNo((String) r[1]);
-            d.setPeriodCode((String) r[2]);
-            d.setPayDate((LocalDate) r[3]);;
-            d.setEmpCode((String) r[4]);
-            d.setFullNameAr((String) r[5]);
-            d.setDepartment((String) r[6]);
-            d.setJobTitle((String) r[7]);
-            d.setBasicSalary((BigDecimal) r[8]);
-            d.setGrossPay((BigDecimal) r[9]);
-            d.setTotalDeductions((BigDecimal) r[10]);
-            d.setInsuranceEmployee((BigDecimal) r[11]);
-            d.setIncomeTax((BigDecimal) r[12]);
-            d.setNetPay((BigDecimal) r[13]);
-            d.setWorkedDays((BigDecimal) r[14]);
-            d.setAbsentDays((BigDecimal) r[15]);
-            d.setOvertimeHours((BigDecimal) r[16]);
-            d.setInsuranceEmployer((BigDecimal) r[17]);
-            d.setTotalCompanyCost((BigDecimal) r[18]);
-            d.setStatus((String) r[19]);
-            d.setCurrency((String) r[20]);
+            d.setPayslipId(((Number) t.get("payslip_id")).longValue());
+            d.setPayslipNo(t.get("payslip_no", String.class));
+            d.setPeriodCode(t.get("period_code", String.class));
+            d.setPayDate(localDate(t, "pay_date"));
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setDepartment(t.get("department", String.class));
+            d.setJobTitle(t.get("job_title", String.class));
+            d.setBasicSalary(t.get("basic_salary", BigDecimal.class));
+            d.setGrossPay(t.get("gross_pay", BigDecimal.class));
+            d.setTotalDeductions(t.get("total_deductions", BigDecimal.class));
+            d.setInsuranceEmployee(t.get("insurance_employee", BigDecimal.class));
+            d.setIncomeTax(t.get("income_tax", BigDecimal.class));
+            d.setNetPay(t.get("net_pay", BigDecimal.class));
+            d.setWorkedDays(t.get("worked_days", BigDecimal.class));
+            d.setAbsentDays(t.get("absent_days", BigDecimal.class));
+            d.setOvertimeHours(t.get("overtime_hours", BigDecimal.class));
+            d.setInsuranceEmployer(t.get("insurance_employer", BigDecimal.class));
+            d.setTotalCompanyCost(t.get("total_company_cost", BigDecimal.class));
+            d.setStatus(t.get("status", String.class));
+            d.setCurrency(t.get("currency", String.class));
             return d;
         }).toList();
     }
 
     public List<PayrollCostByDeptResponse> getPayrollCostByDept(String periodCode) {
-        return reportRepository.getPayrollCostByDept(periodCode).stream().map(r -> {
+        return reportRepository.getPayrollCostByDept(periodCode).stream().map(t -> {
             PayrollCostByDeptResponse d = new PayrollCostByDeptResponse();
-            d.setPeriodCode((String) r[0]);
-            d.setDepartment((String) r[1]);
-            d.setEmployees(((Number) r[2]).longValue());
-            d.setTotalBasic((BigDecimal) r[3]);
-            d.setTotalGross((BigDecimal) r[4]);
-            d.setTotalTax((BigDecimal) r[5]);
-            d.setInsuranceEmployee((BigDecimal) r[6]);
-            d.setInsuranceEmployer((BigDecimal) r[7]);
-            d.setTotalNet((BigDecimal) r[8]);
-            d.setCompanyCost((BigDecimal) r[9]);
+            d.setPeriodCode(t.get("period_code", String.class));
+            d.setDepartment(t.get("department", String.class));
+            d.setEmployees(((Number) t.get("employees")).longValue());
+            d.setTotalBasic(t.get("total_basic", BigDecimal.class));
+            d.setTotalGross(t.get("total_gross", BigDecimal.class));
+            d.setTotalTax(t.get("total_tax", BigDecimal.class));
+            d.setInsuranceEmployee(t.get("insurance_employee", BigDecimal.class));
+            d.setInsuranceEmployer(t.get("insurance_employer", BigDecimal.class));
+            d.setTotalNet(t.get("total_net", BigDecimal.class));
+            d.setCompanyCost(t.get("company_cost", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<PayrollTrendResponse> getPayrollTrend() {
-        return reportRepository.getPayrollTrend().stream().map(r -> {
+        return reportRepository.getPayrollTrend().stream().map(t -> {
             PayrollTrendResponse d = new PayrollTrendResponse();
-            d.setPeriodCode((String) r[0]);
-            d.setEmployees(((Number) r[1]).longValue());
-            d.setGross((BigDecimal) r[2]);
-            d.setDeductions((BigDecimal) r[3]);
-            d.setNet((BigDecimal) r[4]);
-            d.setCompanyCost((BigDecimal) r[5]);
+            d.setPeriodCode(t.get("period_code", String.class));
+            d.setEmployees(((Number) t.get("employees")).longValue());
+            d.setGross(t.get("gross", BigDecimal.class));
+            d.setDeductions(t.get("deductions", BigDecimal.class));
+            d.setNet(t.get("net", BigDecimal.class));
+            d.setCompanyCost(t.get("company_cost", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<TaxInsuranceLiabilityResponse> getTaxInsuranceLiability() {
-        return reportRepository.getTaxInsuranceLiability().stream().map(r -> {
+        return reportRepository.getTaxInsuranceLiability().stream().map(t -> {
             TaxInsuranceLiabilityResponse d = new TaxInsuranceLiabilityResponse();
-            d.setPeriodCode((String) r[0]);
-            d.setIncomeTaxDue((BigDecimal) r[1]);
-            d.setInsuranceEmployeeShare((BigDecimal) r[2]);
-            d.setInsuranceEmployerShare((BigDecimal) r[3]);
-            d.setTotalInsuranceDue((BigDecimal) r[4]);
+            d.setPeriodCode(t.get("period_code", String.class));
+            d.setIncomeTaxDue(t.get("income_tax_due", BigDecimal.class));
+            d.setInsuranceEmployeeShare(t.get("insurance_employee_share", BigDecimal.class));
+            d.setInsuranceEmployerShare(t.get("insurance_employer_share", BigDecimal.class));
+            d.setTotalInsuranceDue(t.get("total_insurance_due", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<BankTransferResponse> getBankTransfer(String periodCode) {
-        return reportRepository.getBankTransfer(periodCode).stream().map(r -> {
+        return reportRepository.getBankTransfer(periodCode).stream().map(t -> {
             BankTransferResponse d = new BankTransferResponse();
-            d.setFullNameEn((String) r[0]);
-            d.setBankName((String) r[1]);
-            d.setBankAccount((String) r[2]);
-            d.setAmount((BigDecimal) r[3]);
-            d.setReference((String) r[4]);
-            d.setPaidOn((LocalDate) r[5]);;
+            d.setFullNameEn(t.get("full_name_en", String.class));
+            d.setBankName(t.get("bank_name", String.class));
+            d.setBankAccount(t.get("bank_account", String.class));
+            d.setAmount(t.get("amount", BigDecimal.class));
+            d.setReference(t.get("reference", String.class));
+            d.setPaidOn(localDate(t, "paid_on"));
             return d;
         }).toList();
     }
 
     public List<LeaveBalanceReportResponse> getLeaveBalances(int fiscalYear) {
-        return reportRepository.getLeaveBalances(fiscalYear).stream().map(r -> {
+        return reportRepository.getLeaveBalances(fiscalYear).stream().map(t -> {
             LeaveBalanceReportResponse d = new LeaveBalanceReportResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setDepartment((String) r[2]);
-            d.setLeaveType((String) r[3]);
-            d.setFiscalYear(((Number) r[4]).intValue());
-            d.setEntitledDays((BigDecimal) r[5]);
-            d.setCarriedForward((BigDecimal) r[6]);
-            d.setUsedDays((BigDecimal) r[7]);
-            d.setRemainingDays((BigDecimal) r[8]);
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setDepartment(t.get("department", String.class));
+            d.setLeaveType(t.get("leave_type", String.class));
+            d.setFiscalYear(((Number) t.get("fiscal_year")).intValue());
+            d.setEntitledDays(t.get("entitled_days", BigDecimal.class));
+            d.setCarriedForward(t.get("carried_forward", BigDecimal.class));
+            d.setUsedDays(t.get("used_days", BigDecimal.class));
+            d.setRemainingDays(t.get("remaining_days", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<LeaveRequestLogResponse> getLeaveRequestLog(String status) {
-        return reportRepository.getLeaveRequestLog(status).stream().map(r -> {
+        return reportRepository.getLeaveRequestLog(status).stream().map(t -> {
             LeaveRequestLogResponse d = new LeaveRequestLogResponse();
-            d.setRequestId(((Number) r[0]).longValue());
-            d.setEmpCode((String) r[1]);
-            d.setFullNameAr((String) r[2]);
-            d.setLeaveType((String) r[3]);
-            d.setStartDate((LocalDate) r[4]);;
-            d.setEndDate((LocalDate) r[5]);;
-            d.setDaysCount((BigDecimal) r[6]);
-            d.setStatus((String) r[7]);
-            d.setApprovedBy((String) r[8]);
-            d.setAppliedOn((LocalDate) r[9]);;
-            d.setDecidedOn(r[10] != null ? (LocalDate) r[10] : null);;
-            d.setReason((String) r[11]);
+            d.setRequestId(((Number) t.get("request_id")).longValue());
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setLeaveType(t.get("leave_type", String.class));
+            d.setStartDate(localDate(t, "start_date"));
+            d.setEndDate(localDate(t, "end_date"));
+            d.setDaysCount(t.get("days_count", BigDecimal.class));
+            d.setStatus(t.get("status", String.class));
+            d.setApprovedBy(t.get("approved_by", String.class));
+            d.setAppliedOn(localDate(t, "applied_on"));
+            d.setDecidedOn(localDate(t, "decided_on"));
+            d.setReason(t.get("reason", String.class));
             return d;
         }).toList();
     }
 
     public List<OvertimeTopResponse> getOvertimeTop10() {
-        return reportRepository.getOvertimeTop10().stream().map(r -> {
+        return reportRepository.getOvertimeTop10().stream().map(t -> {
             OvertimeTopResponse d = new OvertimeTopResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setOtHours((BigDecimal) r[2]);
-            d.setOtPaid((BigDecimal) r[3]);
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setOtHours(t.get("ot_hours", BigDecimal.class));
+            d.setOtPaid(t.get("ot_paid", BigDecimal.class));
             return d;
         }).toList();
     }
 
     public List<AbsenceWatchlistResponse> getAbsenceWatchlist() {
-        return reportRepository.getAbsenceWatchlist().stream().map(r -> {
+        return reportRepository.getAbsenceWatchlist().stream().map(t -> {
             AbsenceWatchlistResponse d = new AbsenceWatchlistResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setDepartment((String) r[2]);
-            d.setUnpaidDays(((Number) r[3]).longValue());
-            d.setLateMinutes(((Number) r[4]).longValue());
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setDepartment(t.get("department", String.class));
+            d.setUnpaidDays(((Number) t.get("unpaid_days")).longValue());
+            d.setLateMinutes(((Number) t.get("late_minutes")).longValue());
             return d;
         }).toList();
     }
 
     public List<ActiveLoanResponse> getActiveLoans() {
-        return reportRepository.getActiveLoans().stream().map(r -> {
+        return reportRepository.getActiveLoans().stream().map(t -> {
             ActiveLoanResponse d = new ActiveLoanResponse();
-            d.setLoanId(((Number) r[0]).longValue());
-            d.setEmpCode((String) r[1]);
-            d.setFullNameAr((String) r[2]);
-            d.setLoanType((String) r[3]);
-            d.setPrincipalAmount((BigDecimal) r[4]);
-            d.setInstallmentsCount(((Number) r[5]).intValue());
-            d.setMonthlyInstallment((BigDecimal) r[6]);
-            d.setRemainingBalance((BigDecimal) r[7]);
-            d.setPaidPct((BigDecimal) r[8]);
-            d.setStartPeriod((String) r[9]);
-            d.setStatus((String) r[10]);
+            d.setLoanId(((Number) t.get("loan_id")).longValue());
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setLoanType(t.get("loan_type", String.class));
+            d.setPrincipalAmount(t.get("principal_amount", BigDecimal.class));
+            d.setInstallmentsCount(((Number) t.get("installments_count")).intValue());
+            d.setMonthlyInstallment(t.get("monthly_installment", BigDecimal.class));
+            d.setRemainingBalance(t.get("remaining_balance", BigDecimal.class));
+            d.setPaidPct(t.get("paid_pct", BigDecimal.class));
+            d.setStartPeriod(t.get("start_period", String.class));
+            d.setStatus(t.get("status", String.class));
             return d;
         }).toList();
     }
 
     public List<ContractExpiringResponse> getContractsExpiring(int months) {
-        return reportRepository.getContractsExpiring(months).stream().map(r -> {
+        return reportRepository.getContractsExpiring(months).stream().map(t -> {
             ContractExpiringResponse d = new ContractExpiringResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setContractNo((String) r[2]);
-            d.setContractType((String) r[3]);
-            d.setStartDate((LocalDate) r[4]);
-            d.setEndDate((LocalDate) r[5]);
-            d.setDaysLeft(((Number) r[6]).longValue());
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setContractNo(t.get("contract_no", String.class));
+            d.setContractType(t.get("contract_type", String.class));
+            d.setStartDate(localDate(t, "start_date"));
+            d.setEndDate(localDate(t, "end_date"));
+            d.setDaysLeft(((Number) t.get("days_left")).longValue());
             return d;
         }).toList();
     }
 
-    // function to find top attendance
     public List<TopAttendanceResponse> getTopAttendance(String periodCode) {
-        return reportRepository.getTopAttendance(periodCode).stream().map(r -> {
+        return reportRepository.getTopAttendance(periodCode).stream().map(t -> {
             TopAttendanceResponse d = new TopAttendanceResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setPresentDays((java.math.BigDecimal) r[2]);
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setPresentDays(t.get("present_days", BigDecimal.class));
             return d;
         }).toList();
     }
 
-    // function to find top salaries
     public List<TopNetSalaryResponse> getTopNetSalary(String periodCode) {
-        return reportRepository.getTopNetSalary(periodCode).stream().map(r -> {
+        return reportRepository.getTopNetSalary(periodCode).stream().map(t -> {
             TopNetSalaryResponse d = new TopNetSalaryResponse();
-            d.setEmpCode((String) r[0]);
-            d.setFullNameAr((String) r[1]);
-            d.setNetPay((java.math.BigDecimal) r[2]);
+            d.setEmpCode(t.get("emp_code", String.class));
+            d.setFullNameAr(t.get("full_name_ar", String.class));
+            d.setNetPay(t.get("net_pay", BigDecimal.class));
             return d;
         }).toList();
     }
