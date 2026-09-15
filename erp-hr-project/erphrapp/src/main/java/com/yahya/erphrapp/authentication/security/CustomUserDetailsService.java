@@ -30,7 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username)  {
         // find user by their username
-        HrUser hrUser = hrUserRepository.findByUsername(username).orElseThrow(()-> new ResourceNotFoundException("HR User", username));
+        HrUser hrUser = hrUserRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Invalid username or password"));
 
         // return user details
         return new User( // translating HrUser to User that spring security understands

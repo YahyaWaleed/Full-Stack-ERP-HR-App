@@ -63,9 +63,22 @@ CREATE TABLE job_titles (
   CONSTRAINT chk_job_range CHECK (max_salary >= min_salary)
 ) ENGINE=InnoDB;
 
+
 /* =====================================================================
    02. EMPLOYEES
    ===================================================================== */
+
+CREATE TABLE hr_users (
+    user_id   INT AUTO_INCREMENT PRIMARY KEY,
+    username  VARCHAR(50) NOT NULL UNIQUE,
+    password  VARCHAR(255) NOT NULL,
+    role      ENUM('HR_ADMIN','HR_USER') NOT NULL
+) ENGINE=InnoDB;
+
+-- Seed admin: replace the hash below with one generated via BCryptPasswordEncoder
+-- before running this script — do not commit a real password hash to git.
+INSERT INTO hr_users (username, password, role)
+VALUES ('admin', '${ADMIN_PASSWORD_HASH}', 'HR_ADMIN');
 
 CREATE TABLE employees (
   emp_id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -1166,6 +1179,7 @@ CALL sp_run_payroll('2026-08');   -- current month: processed, not paid yet
 CALL sp_pay_period('2026-05','TRF');
 CALL sp_pay_period('2026-06','TRF');
 CALL sp_pay_period('2026-07','TRF');
+
 
 UPDATE payroll_periods SET status = 'CLOSED' WHERE period_code IN ('2026-05','2026-06');
 UPDATE payslips SET status = 'APPROVED'
