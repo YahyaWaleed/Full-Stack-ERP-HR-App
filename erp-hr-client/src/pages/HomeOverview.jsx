@@ -23,23 +23,12 @@ function HomeOverview() {
     async function loadOverviewData() {
       try {
         setLoading(true);
-        // Safely fetch counts using existing apiClient
-        const [empRes, leaveRes, loanRes] = await Promise.allSettled([
-          apiClient.get('/employees'),
-          apiClient.get('/leaves'),
-          apiClient.get('/loans')
-        ]);
+        const summary = await apiClient.get('/dashboard/summary');
 
-       setStats({
-        employeesCount: empRes.status === 'fulfilled' && Array.isArray(empRes.value)
-          ? empRes.value.filter((e) => e.empStatus === 'ACTIVE').length
-          : 0,
-        pendingLeaves: leaveRes.status === 'fulfilled' && Array.isArray(leaveRes.value)
-          ? leaveRes.value.filter((l) => l.status === 'PENDING').length
-          : 0,
-        activeLoans: loanRes.status === 'fulfilled' && Array.isArray(loanRes.value)
-          ? loanRes.value.filter((l) => l.status === 'ACTIVE').length
-          : 0,
+        setStats({
+          employeesCount: summary.employeesCount,
+          pendingLeaves: summary.pendingLeaves,
+          activeLoans: summary.activeLoans,
         });
       } catch (err) {
         console.error("Error loading overview metrics:", err);
@@ -49,7 +38,7 @@ function HomeOverview() {
     }
 
     loadOverviewData();
-  }, []);
+}, []);
 
   const role = localStorage.getItem('role') || 'User';
   

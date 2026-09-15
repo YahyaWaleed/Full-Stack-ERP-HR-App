@@ -5,6 +5,8 @@ import com.yahya.erphrapp.loans.dto.LoanRequest;
 import com.yahya.erphrapp.loans.dto.LoanResponse;
 import com.yahya.erphrapp.loans.service.LoanService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +23,8 @@ public class LoanController {
 
     // read all loans
     @GetMapping("/loans")
-    public List<LoanResponse> getLoans() {
-        return  loanService.getLoans();
+    public Page<LoanResponse> getLoans(Pageable pageable) {
+        return loanService.getLoans(pageable);
     }
 
     // read one loan
@@ -40,8 +42,8 @@ public class LoanController {
 
     // read loans for one employee
     @GetMapping("/employees/{employeeId}/loans")
-    public List<LoanResponse> getLoansByEmployeeId(@PathVariable Long employeeId) {
-        return loanService.getLoansByEmployeeId(employeeId);
+    public Page<LoanResponse> getLoansByEmployeeId(@PathVariable Long employeeId, Pageable pageable) {
+        return loanService.getLoansByEmployeeId(employeeId, pageable);
     }
 
     // close loan

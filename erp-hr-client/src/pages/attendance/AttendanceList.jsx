@@ -9,11 +9,11 @@ function AttendanceList() {
   const [error, setError] = useState('');
 
   // load the full employee list once, so we can search it locally
-  useEffect(() => {
-    apiClient.get('/employees')
-      .then(setEmployees)
-      .catch((err) => setError(err.message));
-  }, []);
+useEffect(() => {
+  apiClient.get('/employees?size=1000')
+    .then((data) => setEmployees(data.content))
+    .catch((err) => setError(err.message));
+}, []);
 
   const matches = search.trim()
     ? employees.filter((e) =>

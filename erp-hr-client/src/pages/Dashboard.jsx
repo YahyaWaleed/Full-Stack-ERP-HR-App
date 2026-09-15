@@ -1,29 +1,21 @@
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import LiveClock from '../components/LiveClock';
-import ThemeToggle from '../components/ThemeToggle';  
+import ThemeToggle from '../components/ThemeToggle';
+import { useAuth } from '../auth/AuthContext';
+import { Link } from 'react-router-dom';
 
 function Dashboard() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Retrieve username from location state or local storage
-  const username = location.state?.username || localStorage.getItem('username') || 'HR Manager';
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    navigate('/login');
-  };
+  const { username, logout } = useAuth();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <LiveClock />
       <ThemeToggle />
-      {/* Left Navigation Sidebar */}
-      <div className="sidebar" style={{ width: '220px', borderRight: '1px solid #ccc', padding: '15px' }}>
+
+      <div className="sidebar">
         <h2>ERP HR App</h2>
         <p>Welcome, <strong>{username}</strong></p>
-        <button onClick={handleLogout}>Logout</button>
+        <button onClick={logout}>Logout</button>
         <hr />
 
         <nav>
@@ -47,8 +39,7 @@ function Dashboard() {
         </nav>
       </div>
 
-      {/* Main Content Pane where child routes mount */}
-      <div style={{ flex: 1, padding: '20px' }}>
+      <div className="dashboard-content">
         <Outlet context={{ username }} />
       </div>
     </div>

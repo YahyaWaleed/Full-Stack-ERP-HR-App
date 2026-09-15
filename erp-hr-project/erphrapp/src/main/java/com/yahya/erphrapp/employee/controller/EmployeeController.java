@@ -4,6 +4,8 @@ import com.yahya.erphrapp.employee.dto.EmployeeContractRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeResponse;
 import com.yahya.erphrapp.employee.service.EmployeeService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
@@ -30,8 +32,8 @@ public class EmployeeController {
 
     // read all employees
     @GetMapping
-    public List<EmployeeResponse> getEmployees() {
-        return employeeService.getEmployees();
+    public Page<EmployeeResponse> getEmployees(Pageable pageable) {
+        return employeeService.getEmployees(pageable);
     }
 
     // read one employee

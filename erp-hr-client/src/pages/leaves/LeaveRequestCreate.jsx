@@ -20,21 +20,21 @@ function LeaveRequestCreate() {
   });
 
   // get employees and leave types when the page loads
-  useEffect(() => {
-    Promise.all([
-      apiClient.get('/employees'),
-      apiClient.get('/leave-types')
-    ])
-      .then(([employeeData, leaveTypeData]) => {
-        setEmployees(employeeData);
-        setLeaveTypes(leaveTypeData);
-      })
-      .catch((err) => setError(err.message));
-  }, []);
+useEffect(() => {
+  Promise.all([
+    apiClient.get('/employees?size=1000'),
+    apiClient.get('/leave-types')
+  ])
+    .then(([employeeData, leaveTypeData]) => {
+      setEmployees(employeeData.content);
+      setLeaveTypes(leaveTypeData);
+    })
+    .catch((err) => setError(err.message));
+}, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+const handleChange = (e) => {
+  setForm({ ...form, [e.target.name]: e.target.value });
+};
 
   // Active employees only
   const employeeOptions = employees

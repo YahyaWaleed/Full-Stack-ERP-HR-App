@@ -2,28 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../api/apiClient';
 import { statusClass } from '../../utils/statusClass';
+import Pagination from '../../components/Pagination';
 
 function LeaveRequestsList() {
   const [requests, setRequests] = useState([]);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    apiClient.get('/leaves')
+    apiClient.get(`/leaves?page=${page}&size=20`)
       .then((data) => {
-        const statusOrder = {
-          PENDING: 1,
-          REJECTED: 2,
-          APPROVED: 3
-        };
-
-        const sortedRequests = [...data].sort(
-          (a, b) => statusOrder[a.status] - statusOrder[b.status]
-        );
-
-        setRequests(sortedRequests);
+        setRequests(data.content);
+        setTotalPages(data.totalPages);
       })
       .catch((err) => setError(err.message));
-  }, []);
+  }, [page]);
 
   return (
     <div>
@@ -45,7 +39,7 @@ function LeaveRequestsList() {
         <tbody>
           {requests.map((req) => (
             <tr key={req.id}>
-              <td>{req.empCode} {req.employeeName}</td>
+              <td>{req.employeeName}</td>
               <td>{req.leaveTypeName}</td>
               <td>{req.startDate}</td>
               <td>{req.endDate}</td>
@@ -56,6 +50,8 @@ function LeaveRequestsList() {
           ))}
         </tbody>
       </table>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

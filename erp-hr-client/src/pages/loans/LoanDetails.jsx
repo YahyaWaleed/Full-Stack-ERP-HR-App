@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../../api/apiClient';
-import { statusClass } from '../../utils/statusClass';
+import { useAuth } from '../../auth/AuthContext';
 
 function LoanDetails() {
   const { id } = useParams();
+  const { isAdmin } = useAuth();
   const [loan, setLoan] = useState(null);
   const [installments, setInstallments] = useState([]);
   const [error, setError] = useState('');
@@ -46,13 +47,13 @@ function LoanDetails() {
       <p><strong>Type:</strong> {loan.type}</p>
       <p><strong>Principal:</strong> {loan.principalAmount}</p>
       <p><strong>Remaining Balance:</strong> {loan.remainingBalance}</p>
-      <p><strong>Status:</strong> <span className={statusClass(loan.status)}>{loan.status}</span></p>
+      <p><strong>Status:</strong> {loan.status}</p>
       <p><strong>Approved By:</strong> {loan.approvedById || 'Not yet approved'}</p>
 
-      {loan.status === 'ACTIVE' && (
+      {isAdmin && loan.status === 'ACTIVE' && (
         <>
-          <button onClick={handleClose}>Close Early (Payoff)</button>{' '}
-          <button onClick={handleCancel}>Cancel Loan</button>
+          <button className="btn-approve" onClick={handleClose}>Close Early (Payoff)</button>{' '}
+          <button className="btn-reject" onClick={handleCancel}>Cancel Loan</button>
         </>
       )}
 
@@ -66,7 +67,7 @@ function LoanDetails() {
             <tr key={inst.id}>
               <td>{inst.periodCode}</td>
               <td>{inst.amount}</td>
-              <td>{inst.paidOn || 'Not yet paid'}</td>
+              <td>{inst.payslipId ? `Payslip #${inst.payslipId}` : 'Pending'}</td>
             </tr>
           ))}
         </tbody>

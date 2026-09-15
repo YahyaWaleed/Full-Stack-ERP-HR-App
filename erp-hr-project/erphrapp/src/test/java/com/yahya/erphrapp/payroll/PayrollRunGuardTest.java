@@ -15,9 +15,7 @@ class PayrollRunGuardTest extends AbstractIntegrationTest {
 
     @Test
     void runningPayrollOnNonOpenPeriodThrowsConflict() {
-        // replace with a real periodCode from your seed data whose status
-        // is already PROCESSED, PAID, or CLOSED — not OPEN
-        String alreadyProcessedPeriodCode = "2026-05";
+        String alreadyProcessedPeriodCode = "2026-08";
 
         assertThrows(ConflictException.class, () ->
                 payrollPeriodService.runPayroll(alreadyProcessedPeriodCode));

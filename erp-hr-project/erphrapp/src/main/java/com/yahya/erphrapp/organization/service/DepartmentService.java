@@ -21,7 +21,7 @@ public class DepartmentService {
 
     // get all departments
     public List<DepartmentResponse> getDepartments() {
-        List<DepartmentResponse> departments = departmentRepository.findAll().stream().map(departmentMapper::toResponse).toList();
+        List<DepartmentResponse> departments = departmentRepository.findAllBy().stream().map(departmentMapper::toResponse).toList();
         return departments;
     }
 

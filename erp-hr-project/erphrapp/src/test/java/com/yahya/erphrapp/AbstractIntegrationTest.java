@@ -1,27 +1,30 @@
 package com.yahya.erphrapp;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.flywaydb.core.Flyway;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.MountableFile;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
-    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
-            .withDatabaseName("erp_hr")
-            .withUsername("test")
-            .withPassword("test")
-            .withCopyFileToContainer(
-                    MountableFile.forClasspathResource("erp_hr_payroll.sql"),
-                    "/docker-entrypoint-initdb.d/erp_hr_payroll.sql"
-            );
+    static final MySQLContainer<?> mysql;
+
+    static {
+        mysql = new MySQLContainer<>("mysql:8.0")
+                .withDatabaseName("erp_hr")
+                .withUsername("test")
+                .withPassword("test")
+                .withCommand("mysqld", "--log-bin-trust-function-creators=1");
+
+        mysql.start(); // started once for the whole test run — never explicitly stopped
+
+        Flyway.configure()
+                .dataSource(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword())
+                .load()
+                .migrate();
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

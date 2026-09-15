@@ -20,7 +20,9 @@ function LoanCreate() {
   });
 
   useEffect(() => {
-    apiClient.get('/employees').then(setEmployees).catch(() => {});
+    apiClient.get('/employees?size=1000')
+      .then((data) => setEmployees(data.content))
+      .catch(() => {});
   }, []);
 
   const handleChange = (e) => {
