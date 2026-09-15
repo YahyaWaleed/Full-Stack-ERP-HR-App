@@ -21,8 +21,12 @@ import com.yahya.erphrapp.organization.entity.JobTitle;
 import com.yahya.erphrapp.organization.repository.BranchRepository;
 import com.yahya.erphrapp.organization.repository.DepartmentRepository;
 import com.yahya.erphrapp.organization.repository.JobTitleRepository;
+import com.yahya.erphrapp.payroll.service.PayrollPeriodService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +47,9 @@ public class EmployeeService {
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveRequestRepository leaveRequestRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(PayrollPeriodService.class);
+// inside runPayroll(), after success:
 
     public EmployeeService(LeaveRequestRepository leaveRequestRepository ,LeaveBalanceRepository leaveBalanceRepository, LeaveTypeRepository leaveTypeRepository, EmployeeMapper employeeMapper, EmployeeRepository employeeRepository, BranchRepository branchRepository, DepartmentRepository departmentRepository, JobTitleRepository jobTitleRepository, EmployeeContractRepository employeeContractRepository) {
         this.employeeMapper = employeeMapper;
@@ -162,8 +169,18 @@ public class EmployeeService {
 
     // read one employee
     public EmployeeResponse getEmployee(Long id) {
-        Employee employee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", id));
-        return employeeMapper.toResponse(employee);
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
+        EmployeeResponse response = employeeMapper.toResponse(employee);
+        if (!isCurrentUserAdmin()) {
+            response.setBankAccount(null);
+        }
+        return response;
+    }
+
+    private boolean isCurrentUserAdmin() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_HR_ADMIN"));
     }
 
     @Transactional
@@ -222,6 +239,8 @@ public class EmployeeService {
                     request.setStatus(LeaveRequest.LeaveStatus.CANCELLED);
                     leaveRequestRepository.save(request);
                 });
+
+        log.info("Employee {} terminated", id);
     }
 
     // find all employees in one branch

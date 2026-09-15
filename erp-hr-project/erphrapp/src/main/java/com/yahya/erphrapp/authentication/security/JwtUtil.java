@@ -14,7 +14,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // get secret and expiration from application.properties
+    // get secret and expiration from application-dev.properties
     @Value("${jwt.secret}")
     private String secret;
 

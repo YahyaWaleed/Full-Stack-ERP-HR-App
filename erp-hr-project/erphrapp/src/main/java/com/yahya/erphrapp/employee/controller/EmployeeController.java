@@ -57,9 +57,9 @@ public class EmployeeController {
     }
 
     // get all employees in one branch
-    @GetMapping("/branch/{branchId}")
-    public List<EmployeeResponse> getEmployeesByBranchId(@PathVariable Long branchId) {
-        return employeeService.getEmployeesByBranchId(branchId);
+    @GetMapping("/{id}/employees")
+    public List<EmployeeResponse> getEmployeesByBranch(@PathVariable Long id) {
+        return employeeService.getEmployeesByBranchId(id);
     }
 
     // get all employees in one department

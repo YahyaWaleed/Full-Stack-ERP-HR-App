@@ -8,6 +8,8 @@ import com.yahya.erphrapp.payroll.entity.PayrollPeriod;
 import com.yahya.erphrapp.payroll.mapper.PayrollPeriodMapper;
 import com.yahya.erphrapp.payroll.repository.PayrollPeriodRepository;
 import jakarta.persistence.EntityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,8 @@ public class PayrollPeriodService {
     // inject mapper and repo
     private final PayrollPeriodMapper payrollPeriodMapper;
     private final PayrollPeriodRepository payrollPeriodRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(PayrollPeriodService.class);
 
     private final EntityManager entityManager; // to be able to write queries execute the functions in the db itself
 
@@ -97,6 +101,7 @@ public class PayrollPeriodService {
 
         // save the period
         payrollPeriodRepository.save(period);
+        log.info("Payroll run completed for period {}", periodCode);
     }
 
     // mark the periods as paid
