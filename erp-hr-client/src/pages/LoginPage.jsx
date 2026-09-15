@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
+import { useAuth } from '../auth/AuthContext';
 
 // any CSS styling is completely done by AI //
 
 
 function LoginPage() {
-    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-
+    const { login } = useAuth();
+ 
     // function to handle the form by using the backend API
      const handleSubmit = async (e) => {
     e.preventDefault(); // stops the page from refreshing on submit
@@ -27,10 +27,10 @@ function LoginPage() {
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.token);
+      login(data.token);
       localStorage.setItem('username', username);
       localStorage.setItem('role', data.role);
-      navigate('/dashboard');
+      
 
     } catch (err) {
       setError(err.message);

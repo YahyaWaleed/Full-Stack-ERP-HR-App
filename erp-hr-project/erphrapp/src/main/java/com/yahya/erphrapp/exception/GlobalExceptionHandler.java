@@ -48,5 +48,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthFailure(Exception ex, HttpServletRequest req) {
         return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Invalid username or password", req, null);
     }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleBadEnum(Exception ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_VALUE", "Invalid value in request body — check enum fields", req, null);
+    }
 }
 

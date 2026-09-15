@@ -2,6 +2,7 @@ package com.yahya.erphrapp.leaves.controller;
 
 import com.yahya.erphrapp.leaves.dto.LeaveBalanceResponse;
 import com.yahya.erphrapp.leaves.service.LeaveBalanceService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

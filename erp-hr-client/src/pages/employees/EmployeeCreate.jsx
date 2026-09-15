@@ -48,22 +48,22 @@ function EmployeeCreate() {
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const [
-          departmentsData,
-          jobTitlesData,
-          branchesData,
-          employeesData,
-        ] = await Promise.all([
-          apiClient.get('/departments'),
-          apiClient.get('/jobs'),
-          apiClient.get('/branches'),
-          apiClient.get('/employees'),
-        ]);
+      const [
+        departmentsData,
+        jobTitlesData,
+        branchesData,
+        employeesData,
+      ] = await Promise.all([
+        apiClient.get('/departments'),
+        apiClient.get('/jobs'),
+        apiClient.get('/branches'),
+        apiClient.get('/employees?size=1000'),
+      ]);
 
-        setDepartments(departmentsData);
-        setJobTitles(jobTitlesData);
-        setBranches(branchesData);
-        setEmployees(employeesData);
+      setDepartments(departmentsData);
+      setJobTitles(jobTitlesData);
+      setBranches(branchesData);
+      setEmployees(employeesData.content);
       } catch (err) {
         setError(err.message);
       }

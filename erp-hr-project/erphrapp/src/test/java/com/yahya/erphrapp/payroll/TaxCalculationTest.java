@@ -16,15 +16,13 @@ class TaxCalculationTest extends AbstractIntegrationTest {
 
     @Test
     void incomeTaxIsCalculatedCorrectlyForKnownBracket() {
-        // adjust this taxable income value and expected result to match
-        // real numbers from your tax_brackets seed data for 2026
         Object result = entityManager
                 .createNativeQuery("SELECT fn_income_tax(:income, :year)")
-                .setParameter("income", new BigDecimal("100000"))
+                .setParameter("income", new BigDecimal("10000"))
                 .setParameter("year", 2026)
                 .getSingleResult();
 
         BigDecimal tax = new BigDecimal(result.toString());
-        assertThat(tax).isGreaterThan(BigDecimal.ZERO);
+        assertThat(tax).isEqualByComparingTo(new BigDecimal("812.50"));
     }
 }

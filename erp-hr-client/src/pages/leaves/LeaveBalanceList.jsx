@@ -9,8 +9,8 @@ function LeaveBalanceList() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiClient.get('/employees')
-      .then(setEmployees)
+    apiClient.get('/employees?size=1000')
+      .then((data) => setEmployees(data.content))
       .catch((err) => setError(err.message));
   }, []);
 

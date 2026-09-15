@@ -9,6 +9,8 @@ import com.yahya.erphrapp.leaves.entity.LeaveRequest;
 import com.yahya.erphrapp.leaves.service.LeaveRequestService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,14 +33,14 @@ public class LeaveRequestController {
 
     // read all leave requests
     @GetMapping("/leaves")
-    public List<LeaveRequestResponse> getLeaveRequests() {
-        return leaveRequestService.getLeaveRequests();
+    public Page<LeaveRequestResponse> getRequests(Pageable pageable) {
+        return leaveRequestService.getRequests(pageable);
     }
 
-    // read leave requests for an employee by employee ID
+    // read all leave requests for one employee
     @GetMapping("/employees/{empId}/leaves")
-    public List<LeaveRequestResponse> getLeaveRequestsByEmployeeId(@PathVariable Long empId) {
-        return leaveRequestService.getLeaveRequestsByEmployeeId(empId);
+    public Page<LeaveRequestResponse> getRequestsByEmployeeId(@PathVariable Long empId, Pageable pageable) {
+        return leaveRequestService.getRequestsByEmployeeId(empId, pageable);
     }
 
 

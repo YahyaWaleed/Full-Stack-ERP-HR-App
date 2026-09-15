@@ -15,9 +15,12 @@ import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveRequestRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveTypeRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -46,18 +49,18 @@ public class LeaveRequestService {
     }
 
     // read all leave requests
-    public List<LeaveRequestResponse> getLeaveRequests() {
-        List<LeaveRequest> leaveRequests = leaveRequestRepository.findAll();
-        return leaveRequests.stream().map(leaveRequestMapper::toResponse).toList();
+    public Page<LeaveRequestResponse> getRequests(Pageable pageable) {
+        return leaveRequestRepository.findAllBy(pageable)
+                .map(leaveRequestMapper::toResponse);
     }
 
-    // read leave requests for an employee by employee ID
-    public List<LeaveRequestResponse> getLeaveRequestsByEmployeeId(Long empId) {
-        List<LeaveRequest> leaveRequests = leaveRequestRepository.findAllByEmployeeId(empId);
-        return leaveRequests.stream().map(leaveRequestMapper::toResponse).toList();
+    // read all leave requests by employee ID
+    public Page<LeaveRequestResponse> getRequestsByEmployeeId(Long empId, Pageable pageable) {
+        return leaveRequestRepository.findAllByEmployeeId(empId, pageable)
+                .map(leaveRequestMapper::toResponse);
     }
 
-    // create a leave  request for an employee by emp ID
+    // create a leave request for an employee by emp ID
     @Transactional
     public LeaveRequestResponse createLeaveRequest(Long empId, LeaveRequestRequest leaveRequestRequest) {
 
@@ -71,7 +74,6 @@ public class LeaveRequestService {
             throw new ConflictException("End date must be on or after the start date");
         }
 
-
         LeaveRequest leaveRequest = new LeaveRequest();
 
         leaveRequest.setEmployee(employee);
@@ -82,12 +84,26 @@ public class LeaveRequestService {
         leaveRequest.setStatus(LeaveRequest.LeaveStatus.PENDING);
         leaveRequest.setAppliedOn(LocalDate.now());
 
-        long daysBetween = ChronoUnit.DAYS.between(leaveRequestRequest.getStartDate(), leaveRequestRequest.getEndDate()) + 1;
-        leaveRequest.setDaysCount(BigDecimal.valueOf(daysBetween));
+        long workingDays = calculateWorkingDays(leaveRequestRequest.getStartDate(), leaveRequestRequest.getEndDate());
+        leaveRequest.setDaysCount(BigDecimal.valueOf(workingDays));
 
         leaveRequestRepository.save(leaveRequest);
 
         return leaveRequestMapper.toResponse(leaveRequest);
+    }
+
+    // counts working days in the range, excluding Friday and Saturday
+    private long calculateWorkingDays(LocalDate start, LocalDate end) {
+        long count = 0;
+        LocalDate current = start;
+        while (!current.isAfter(end)) {
+            DayOfWeek day = current.getDayOfWeek();
+            if (day != DayOfWeek.FRIDAY && day != DayOfWeek.SATURDAY) {
+                count++;
+            }
+            current = current.plusDays(1);
+        }
+        return count;
     }
 
     // cancel a leave request

@@ -12,6 +12,8 @@ import com.yahya.erphrapp.payroll.mapper.PayslipMapper;
 import com.yahya.erphrapp.payroll.repository.PayrollPeriodRepository;
 import com.yahya.erphrapp.payroll.repository.PayslipLineRepository;
 import com.yahya.erphrapp.payroll.repository.PayslipRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,15 +43,12 @@ public class PayslipService {
     }
 
     // read all payslips for a specific month by periodCode
-    public List<PayslipResponse> getPayslipByPeriodCode(String periodCode) {
+    public Page<PayslipResponse> getPayslipByPeriodCode(String periodCode, Pageable pageable) {
+        PayrollPeriod period = payrollPeriodRepository.findByPeriodCode(periodCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Payroll Period", periodCode));
 
-        // find period id
-        PayrollPeriod period = payrollPeriodRepository.findByPeriodCode(periodCode).orElseThrow(() -> new ResourceNotFoundException("Payroll Period", periodCode));
-        long periodId = period.getId();
-
-        // get all payslips that have same period id
-        List<Payslip> payslips = payslipRepository.findAllByPeriodId(periodId);
-        return payslips.stream().map(payslipMapper::toResponse).toList();
+        return payslipRepository.findAllByPeriodId(period.getId(), pageable)
+                .map(payslipMapper::toResponse);
     }
 
     // read one payslip as lines

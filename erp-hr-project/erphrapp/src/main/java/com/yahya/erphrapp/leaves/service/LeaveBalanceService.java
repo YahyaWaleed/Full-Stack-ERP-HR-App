@@ -2,9 +2,12 @@ package com.yahya.erphrapp.leaves.service;
 
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.leaves.dto.LeaveBalanceResponse;
+import com.yahya.erphrapp.leaves.dto.LeaveRequestResponse;
 import com.yahya.erphrapp.leaves.entity.LeaveBalance;
 import com.yahya.erphrapp.leaves.mapper.LeaveBalanceMapper;
 import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,4 +37,6 @@ public class LeaveBalanceService {
                 .map(leaveBalanceMapper::toResponse)
                 .toList();
     }
+
+
 }

@@ -10,8 +10,10 @@ import com.yahya.erphrapp.employee.repository.EmployeeContractRepository;
 import com.yahya.erphrapp.employee.repository.EmployeeRepository;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.leaves.entity.LeaveBalance;
+import com.yahya.erphrapp.leaves.entity.LeaveRequest;
 import com.yahya.erphrapp.leaves.entity.LeaveType;
 import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
+import com.yahya.erphrapp.leaves.repository.LeaveRequestRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveTypeRepository;
 import com.yahya.erphrapp.organization.entity.Branch;
 import com.yahya.erphrapp.organization.entity.Department;
@@ -19,6 +21,8 @@ import com.yahya.erphrapp.organization.entity.JobTitle;
 import com.yahya.erphrapp.organization.repository.BranchRepository;
 import com.yahya.erphrapp.organization.repository.DepartmentRepository;
 import com.yahya.erphrapp.organization.repository.JobTitleRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -38,9 +42,11 @@ public class EmployeeService {
     private final EmployeeContractRepository employeeContractRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
 
-    public EmployeeService(LeaveBalanceRepository leaveBalanceRepository, LeaveTypeRepository leaveTypeRepository, EmployeeMapper employeeMapper, EmployeeRepository employeeRepository, BranchRepository branchRepository, DepartmentRepository departmentRepository, JobTitleRepository jobTitleRepository, EmployeeContractRepository employeeContractRepository) {
+    public EmployeeService(LeaveRequestRepository leaveRequestRepository ,LeaveBalanceRepository leaveBalanceRepository, LeaveTypeRepository leaveTypeRepository, EmployeeMapper employeeMapper, EmployeeRepository employeeRepository, BranchRepository branchRepository, DepartmentRepository departmentRepository, JobTitleRepository jobTitleRepository, EmployeeContractRepository employeeContractRepository) {
         this.employeeMapper = employeeMapper;
+        this.leaveRequestRepository = leaveRequestRepository;
         this.leaveBalanceRepository = leaveBalanceRepository;
         this.leaveTypeRepository = leaveTypeRepository;
         this.employeeRepository = employeeRepository;
@@ -149,9 +155,9 @@ public class EmployeeService {
 
 
     // read all employees
-    public List<EmployeeResponse> getEmployees() {
-        List<EmployeeResponse> employees = employeeRepository.findAll().stream().map(employeeMapper::toResponse).toList();
-        return  employees;
+    public Page<EmployeeResponse> getEmployees(Pageable pageable) {
+        return employeeRepository.findAllBy(pageable)
+                .map(employeeMapper::toResponse);
     }
 
     // read one employee
@@ -202,12 +208,20 @@ public class EmployeeService {
         return employeeMapper.toResponse(employee);
     }
 
+    // terminate an Employee (sets his contract to TERMINATED
     @Transactional
-    // set his status to TERMINATED
     public void terminateEmployee(Long id) {
-        Employee employee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", id));
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
         employee.setEmpStatus(Employee.EmployeeStatus.TERMINATED);
         employeeRepository.save(employee);
+
+        // cancel any pending leave requests
+        leaveRequestRepository.findAllByEmployeeIdAndStatus(id, LeaveRequest.LeaveStatus.PENDING)
+                .forEach(request -> {
+                    request.setStatus(LeaveRequest.LeaveStatus.CANCELLED);
+                    leaveRequestRepository.save(request);
+                });
     }
 
     // find all employees in one branch

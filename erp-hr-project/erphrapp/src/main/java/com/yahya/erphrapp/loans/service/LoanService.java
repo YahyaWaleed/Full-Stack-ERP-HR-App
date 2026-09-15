@@ -13,6 +13,8 @@ import com.yahya.erphrapp.loans.mapper.LoanMapper;
 import com.yahya.erphrapp.loans.repository.LoanInstallmentRepository;
 import com.yahya.erphrapp.loans.repository.LoanRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,9 +38,15 @@ public class LoanService {
     }
 
     // read all loans
-    public List<LoanResponse> getLoans() {
-        List<Loan> loans = loanRepository.findAll();
-        return loans.stream().map(loanMapper::toResponse).toList();
+    public Page<LoanResponse> getLoans(Pageable pageable) {
+        return loanRepository.findAllBy(pageable)
+                .map(loanMapper::toResponse);
+    }
+
+    // read all loans for one employee
+    public Page<LoanResponse> getLoansByEmployeeId(Long employeeId, Pageable pageable) {
+        return loanRepository.findAllByEmployeeId(employeeId, pageable)
+                .map(loanMapper::toResponse);
     }
 
     // read one loan by loan id
@@ -68,12 +76,6 @@ public class LoanService {
 
         loanRepository.save(loan);
         return loanMapper.toResponse(loan);
-    }
-
-    // read loans for one employee
-    public List<LoanResponse> getLoansByEmployeeId(Long employeeId) {
-        List<Loan> loans = loanRepository.findAllByEmployeeId(employeeId);
-        return loans.stream().map(loanMapper::toResponse).toList();
     }
 
     // closing a loan

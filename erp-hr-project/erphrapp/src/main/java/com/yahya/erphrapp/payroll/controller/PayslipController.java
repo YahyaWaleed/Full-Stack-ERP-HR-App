@@ -3,6 +3,8 @@ package com.yahya.erphrapp.payroll.controller;
 import com.yahya.erphrapp.payroll.dto.PayslipLineResponse;
 import com.yahya.erphrapp.payroll.dto.PayslipResponse;
 import com.yahya.erphrapp.payroll.service.PayslipService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,8 +33,8 @@ public class PayslipController {
 
     //read all payslips for a specific month by periodCode
     @GetMapping("/month/{periodCode}")
-    public List<PayslipResponse> getPayslipsByPeriodCode(@PathVariable String periodCode) {
-        return payslipService.getPayslipByPeriodCode(periodCode);
+    public Page<PayslipResponse> getPayslipsByPeriodCode(@PathVariable String periodCode, Pageable pageable) {
+        return payslipService.getPayslipByPeriodCode(periodCode, pageable);
     }
 
     // read one payslip as lines
