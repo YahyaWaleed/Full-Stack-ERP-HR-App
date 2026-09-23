@@ -65,6 +65,23 @@ export DB_PASSWORD=... JWT_SECRET=... ADMIN_PASSWORD_HASH='$2y$10$...'
 
 For production: `SPRING_PROFILES_ACTIVE=prod` plus all variables above.
 
+### Running from IntelliJ against the Docker database
+
+Instead of environment variables, the `dev` profile also reads `erphrapp/config/local.properties` if it exists
+(git-ignored). To use the MySQL started by `docker compose` (port 3307) while running the backend in the IDE:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3307/erp_hr?allowPublicKeyRetrieval=true&useSSL=false
+spring.datasource.username=erp_app
+spring.datasource.password=<DB_PASSWORD from .env>
+jwt.secret=<JWT_SECRET from .env>
+spring.flyway.placeholders.admin_password_hash=<ADMIN_PASSWORD_HASH from .env, with $$ written as $>
+server.port=8081
+```
+
+Stop the Docker backend first (`docker compose stop backend frontend`), and run the client with
+`VITE_API_URL=http://localhost:8081/api/v1` (e.g. in `erp-hr-client/.env.development.local`).
+
 ## API
 
 Everything is under `/api/v1`. Lists are paginated (`?page=0&size=25&sort=field,desc`) and filtered with query
