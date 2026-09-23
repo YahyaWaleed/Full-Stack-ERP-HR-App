@@ -15,15 +15,24 @@ export const options = {
     },
 };
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+
+// credentials are never committed -- pass them in:
+//   k6 run -e LOAD_TEST_USERNAME=admin -e LOAD_TEST_PASSWORD=... load-test.js
+const USERNAME = __ENV.LOAD_TEST_USERNAME;
+const PASSWORD = __ENV.LOAD_TEST_PASSWORD;
 
 export function setup() {
+
+    if (!USERNAME || !PASSWORD) {
+        throw new Error('Set LOAD_TEST_USERNAME and LOAD_TEST_PASSWORD (k6 run -e ...).');
+    }
 
     const loginResponse = http.post(
         `${BASE_URL}/api/auth/login`,
         JSON.stringify({
-            username: 'Yahya',
-            password: 'REMOVED',
+            username: USERNAME,
+            password: PASSWORD,
         }),
         {
             headers: {

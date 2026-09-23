@@ -1,11 +1,20 @@
 
-const BASE_URL = 'http://localhost:8080/api';
+import { getToken, clearToken } from '../auth/tokenStorage';
+
+// set VITE_API_URL (e.g. in .env.production) to point a build at another backend
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+// AuthProvider registers its logout() here so a 401 also clears the React auth state
+let onUnauthorized = null;
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler;
+}
 
 // this function will allow me to write request('/employees', { method: 'GET' }) instead of fetch('http://localhost:8080/api/employees', { method: 'GET' })
 // path = the endpoint, e.g. '/employees'  
 // options = the fetch options, e.g. { method: 'GET' }
 async function request(path, options = {}) {
-  const token = localStorage.getItem('token');  // get the jwt from localStorage
+  const token = getToken();  // get the jwt
 
   // make the fetch request with the base URL and the path, and add the Authorization header if the token exists
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -20,11 +29,20 @@ async function request(path, options = {}) {
     },
   });
 
-  // if the response is 401 (Unauthorized) or 403 (Forbidden), remove the token from localStorage and redirect to the login page
-  if (response.status === 401 || response.status === 403) {
-    localStorage.removeItem('token'); // remove token from localStorage
-    window.location.href = '/login'; // redirect to the login page
-    return; // stop the function from continuing to execute (after redirect, the user will be on the login page and the rest of the code won't run)
+  // 401 (Unauthorized) = token missing or expired -> log out and go to the login page
+  if (response.status === 401) {
+    if (onUnauthorized) {
+      onUnauthorized();
+    } else {
+      clearToken();
+      window.location.href = '/login';
+    }
+    throw new Error('Your session has expired. Please log in again.'); // callers' catch blocks stop here instead of using undefined data
+  }
+
+  // 403 (Forbidden) = logged in, but this role can't do that -> keep the session and let the page show the message
+  if (response.status === 403) {
+    throw new Error("You don't have permission to perform this action.");
   }
 
   // if server returns an error, throw an error with the message from the backend (if it exists) or a generic message

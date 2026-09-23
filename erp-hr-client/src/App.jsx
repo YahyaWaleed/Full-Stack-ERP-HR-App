@@ -79,24 +79,24 @@ function App() {
             {/* HR Management Sub-routes */}
             <Route path="employees" element={<Employee />} />
             <Route path="employees/list" element={<EmployeeList />} />
-            <Route path="employees/create" element={<EmployeeCreate />} />
+            <Route path="employees/create" element={<ProtectedRoute adminOnly><EmployeeCreate /></ProtectedRoute>} />
             <Route path="employees/:id" element={<EmployeeDetails />} />
-            <Route path="employees/:id/contracts/renew" element={<EmployeeContractRenew />} />
+            <Route path="employees/:id/contracts/renew" element={<ProtectedRoute adminOnly><EmployeeContractRenew /></ProtectedRoute>} />
             <Route path="attendance" element={<AttendanceList />} />
             <Route path="leaves" element={<Leave />} />
             <Route path="leaves/list" element={<LeaveRequestsList />} />
-            <Route path="leaves/create" element={<LeaveRequestCreate />} />
+            <Route path="leaves/create" element={<ProtectedRoute adminOnly><LeaveRequestCreate /></ProtectedRoute>} />
             <Route path="leaves/balances" element={<LeaveBalanceList />} />
             <Route path="leaves/:id" element={<LeaveRequestDetails />} />
             <Route path="loans" element={<Loan />} />
             <Route path="loans/list" element={<LoanList />} />
-            <Route path="loans/create" element={<LoanCreate />} />
+            <Route path="loans/create" element={<ProtectedRoute adminOnly><LoanCreate /></ProtectedRoute>} />
             <Route path="loans/:id" element={<LoanDetails />} />
             <Route path="payroll" element={<Payroll />} />
             <Route path="payroll/periods" element={<PayrollPeriodList />} />
-            <Route path="payroll/periods/create" element={<PayrollPeriodCreate />} />
+            <Route path="payroll/periods/create" element={<ProtectedRoute adminOnly><PayrollPeriodCreate /></ProtectedRoute>} />
             <Route path="payroll/periods/:periodCode" element={<PayrollPeriodDetails />} />
-            <Route path="payroll/payslips/:id" element={<PayslipDetails />} />
+            <Route path="payroll/payslips/:id" element={<ProtectedRoute adminOnly><PayslipDetails /></ProtectedRoute>} />
 
             {/* Organization Sub-routes */}
             <Route path="branches" element={<BranchList />} />
@@ -107,22 +107,22 @@ function App() {
             <Route path="jobs/:jobTitleId/employees" element={<JobTitleEmployees />} />
 
             {/* Reports */}
-            <Route path="reports" element={<Report />} />
-            <Route path="reports/employee-directory" element={<EmployeeDirectoryReport />} />
-            <Route path="reports/headcount-by-department" element={<HeadCountByDeptReport />} />
-            <Route path="reports/payroll-register" element={<PayrollRegisterReport />} />
-            <Route path="reports/payroll-cost-by-department" element={<PayrollCostByDeptReport />} />
-            <Route path="reports/payroll-trend" element={<PayrollTrendReport />} />
-            <Route path="reports/tax-insurance-liability" element={<TaxInsuranceLiabilityReport />} />
-            <Route path="reports/bank-transfer" element={<BankTransferReport />} />
-            <Route path="reports/leave-balances" element={<LeaveBalancesReport />} />
-            <Route path="reports/leave-requests" element={<LeaveRequestLogReport />} />
-            <Route path="reports/overtime-top10" element={<OvertimeTopf10Report />} />
-            <Route path="reports/absence-watchlist" element={<AbsenceWatchlistReport />} />
-            <Route path="reports/active-loans" element={<ActiveLoansReport />} />
-            <Route path="reports/contracts-expiring" element={<ContractsExpiringReport />} />
-            <Route path="reports/top-attendance" element={<TopAttendanceReport />} />
-            <Route path="reports/top-net-salary" element={<TopNetSalaryReport />} />
+            <Route path="reports" element={<ProtectedRoute adminOnly><Report /></ProtectedRoute>} />
+            <Route path="reports/employee-directory" element={<ProtectedRoute adminOnly><EmployeeDirectoryReport /></ProtectedRoute>} />
+            <Route path="reports/headcount-by-department" element={<ProtectedRoute adminOnly><HeadCountByDeptReport /></ProtectedRoute>} />
+            <Route path="reports/payroll-register" element={<ProtectedRoute adminOnly><PayrollRegisterReport /></ProtectedRoute>} />
+            <Route path="reports/payroll-cost-by-department" element={<ProtectedRoute adminOnly><PayrollCostByDeptReport /></ProtectedRoute>} />
+            <Route path="reports/payroll-trend" element={<ProtectedRoute adminOnly><PayrollTrendReport /></ProtectedRoute>} />
+            <Route path="reports/tax-insurance-liability" element={<ProtectedRoute adminOnly><TaxInsuranceLiabilityReport /></ProtectedRoute>} />
+            <Route path="reports/bank-transfer" element={<ProtectedRoute adminOnly><BankTransferReport /></ProtectedRoute>} />
+            <Route path="reports/leave-balances" element={<ProtectedRoute adminOnly><LeaveBalancesReport /></ProtectedRoute>} />
+            <Route path="reports/leave-requests" element={<ProtectedRoute adminOnly><LeaveRequestLogReport /></ProtectedRoute>} />
+            <Route path="reports/overtime-top10" element={<ProtectedRoute adminOnly><OvertimeTopf10Report /></ProtectedRoute>} />
+            <Route path="reports/absence-watchlist" element={<ProtectedRoute adminOnly><AbsenceWatchlistReport /></ProtectedRoute>} />
+            <Route path="reports/active-loans" element={<ProtectedRoute adminOnly><ActiveLoansReport /></ProtectedRoute>} />
+            <Route path="reports/contracts-expiring" element={<ProtectedRoute adminOnly><ContractsExpiringReport /></ProtectedRoute>} />
+            <Route path="reports/top-attendance" element={<ProtectedRoute adminOnly><TopAttendanceReport /></ProtectedRoute>} />
+            <Route path="reports/top-net-salary" element={<ProtectedRoute adminOnly><TopNetSalaryReport /></ProtectedRoute>} />
           </Route>
 
           {/* Fallback Catch-all */}

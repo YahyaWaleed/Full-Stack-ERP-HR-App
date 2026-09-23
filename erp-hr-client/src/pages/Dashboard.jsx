@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Link } from 'react-router-dom';
 
 function Dashboard() {
-  const { username, logout } = useAuth();
+  const { username, isAdmin, logout } = useAuth();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -34,8 +34,13 @@ function Dashboard() {
           <Link to="/dashboard/departments">Departments</Link><br /><br />
           <Link to="/dashboard/jobs">Job Titles</Link><br /><br />
 
-          <p><strong>Reports</strong></p>
-          <Link to="/dashboard/reports">Reports</Link><br /><br />
+          {/* reports expose salaries and bank data -- HR_ADMIN only on the backend */}
+          {isAdmin && (
+            <>
+              <p><strong>Reports</strong></p>
+              <Link to="/dashboard/reports">Reports</Link><br /><br />
+            </>
+          )}
         </nav>
       </div>
 

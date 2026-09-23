@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/apiClient';
+import { useAuth } from '../../auth/AuthContext';
 import { statusClass } from '../../utils/statusClass';
 
 function LeaveRequestDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [request, setRequest] = useState(null);
   const [error, setError] = useState('');
   const [rejectReason, setRejectReason] = useState('');
@@ -59,7 +61,7 @@ function LeaveRequestDetails() {
       <p><strong>Status:</strong> <span className={statusClass(request.status)}>{request.status}</span></p>
       {request.rejectReason && <p><strong>Rejected because:</strong> {request.rejectReason}</p>}
 
-      {request.status === 'PENDING' && (
+      {isAdmin && request.status === 'PENDING' && (
   <>
     <button className="btn-approve" onClick={handleApprove}>Approve</button>{' '}
     <button className="btn-reject" onClick={() => setShowRejectForm(true)}>Reject</button>{' '}

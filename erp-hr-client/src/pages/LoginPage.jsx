@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../auth/AuthContext';
+import { BASE_URL } from '../api/apiClient';
 
 // any CSS styling is completely done by AI //
 
@@ -16,7 +17,7 @@ function LoginPage() {
     e.preventDefault(); // stops the page from refreshing on submit
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -28,9 +29,6 @@ function LoginPage() {
 
       const data = await response.json();
       login(data.token);
-      localStorage.setItem('username', username);
-      localStorage.setItem('role', data.role);
-      
 
     } catch (err) {
       setError(err.message);

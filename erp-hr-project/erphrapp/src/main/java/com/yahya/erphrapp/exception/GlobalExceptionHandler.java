@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestControllerAdvice // = "If any REST controller throws an exception, come here and decide what HTTP response the client should receive"
 public class GlobalExceptionHandler {
@@ -52,12 +53,21 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "INVALID_VALUE", "Invalid value in request body — check enum fields", req, null);
     }
 
+    // @PreAuthorize denials are thrown inside the controller call, so without this they'd fall into handleUnexpected as a 500
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex, HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not have permission to perform this action", req, null);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest req) {
-        log.error("Unhandled exception on {}: {}", req.getRequestURI(), ex.getMessage(), ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", ex.getMessage(), req, null);
+        // never send ex.getMessage() to the client (may contain SQL or paths); the ref ties the response to the log line
+        String ref = UUID.randomUUID().toString().substring(0, 8);
+        log.error("Unhandled exception [ref={}] on {}: {}", ref, req.getRequestURI(), ex.getMessage(), ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
+                "An unexpected error occurred (ref: " + ref + ")", req, null);
     }
 }
 

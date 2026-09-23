@@ -31,8 +31,8 @@ function PayrollPeriodDetails() {
 
   useEffect(() => {
     loadPeriod();
-    loadPayslips();
-  }, [periodCode, page]);
+    if (isAdmin) loadPayslips(); // payslips are HR_ADMIN only on the backend
+  }, [periodCode, page, isAdmin]);
 
   const handleRunPayroll = async () => {
     if (!window.confirm(`Run payroll for ${periodCode}? This will generate payslips for every employee.`)) return;
@@ -80,8 +80,8 @@ function PayrollPeriodDetails() {
         </div>
       )}
 
-      <h3>Payslips</h3>
-      {payslips.length === 0 ? (
+      {isAdmin && <h3>Payslips</h3>}
+      {!isAdmin ? null : payslips.length === 0 ? (
         <p>No payslips generated yet — run payroll first.</p>
       ) : (
         <>

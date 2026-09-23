@@ -1,10 +1,9 @@
 package com.yahya.erphrapp;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class ErphrappApplicationTests {
+// starting the context runs every Flyway migration and ddl-auto=validate, so this fails if entities and schema drift
+class ErphrappApplicationTests extends AbstractIntegrationTest {
 
 	@Test
 	void contextLoads() {

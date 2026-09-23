@@ -1,15 +1,16 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
+// adminOnly mirrors @PreAuthorize("hasRole('HR_ADMIN')") on the backend
 function ProtectedRoute({ children, adminOnly = false }) {
-  const { role } = useAuth();
-  const token = localStorage.getItem('token');
+  const { isAuthenticated, isAdmin } = useAuth();
 
-  if (!token) {
+  // no token, or the token has expired -> back to login before rendering anything
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && role !== 'HR_ADMIN') {
+  if (adminOnly && !isAdmin) {
     return <p>You don't have permission to view this page.</p>;
   }
 

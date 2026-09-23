@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { apiClient } from '../api/apiClient';
+import { useAuth } from '../auth/AuthContext';
 import EmployeeList from './employees/EmployeeList';
 import LeaveRequestsList from './leaves/LeaveRequestsList';
 import LoanList from './loans/LoanList';
@@ -40,7 +41,8 @@ function HomeOverview() {
     loadOverviewData();
 }, []);
 
-  const role = localStorage.getItem('role') || 'User';
+  const { role: authRole, isAdmin } = useAuth();
+  const role = authRole || 'User';
   
   return (
     <div>
@@ -106,25 +108,28 @@ function HomeOverview() {
           <li className="quick-navigation-item"><a className="quick-navigation-link" href="#employees" onClick={(event) => { event.preventDefault(); setActiveQuickView('employees'); }}>View Employees</a></li>
           <li className="quick-navigation-item"><a className="quick-navigation-link" href="#leaves" onClick={(event) => { event.preventDefault(); setActiveQuickView('leaves'); }}>Review Leave Requests</a></li>
           <li className="quick-navigation-item"><a className="quick-navigation-link" href="#loans" onClick={(event) => { event.preventDefault(); setActiveQuickView('loans'); }}>View Loan Requests</a></li>
-          <li className="quick-navigation-item">
-            <a
-              className="quick-navigation-link"
-              href="#expiring-contracts"
-              onClick={(event) => {
-                event.preventDefault();
-                setActiveQuickView('expiring-contracts');
-              }}
-            >
-              View Expiring Contracts
-            </a>
-          </li>
+          {/* built on an HR_ADMIN-only report endpoint */}
+          {isAdmin && (
+            <li className="quick-navigation-item">
+              <a
+                className="quick-navigation-link"
+                href="#expiring-contracts"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setActiveQuickView('expiring-contracts');
+                }}
+              >
+                View Expiring Contracts
+              </a>
+            </li>
+          )}
         </ul>
       </div>
 
       {activeQuickView === 'employees' && <EmployeeList />}
       {activeQuickView === 'leaves' && <LeaveRequestsList />}
       {activeQuickView === 'loans' && <LoanList />}
-      {activeQuickView === 'expiring-contracts' && <ContractsExpiringReport />}
+      {isAdmin && activeQuickView === 'expiring-contracts' && <ContractsExpiringReport />}
     </div>
   );
 }

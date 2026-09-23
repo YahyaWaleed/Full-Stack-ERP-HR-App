@@ -101,9 +101,10 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Boot 4 only auto-runs Flyway through its starter; flyway-core alone never migrates -->
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
 		</dependency>
 
 		<dependency>
