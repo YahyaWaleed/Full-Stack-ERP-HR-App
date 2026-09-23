@@ -7,7 +7,6 @@ import com.yahya.erphrapp.leaves.dto.LeaveRequestResponse;
 import com.yahya.erphrapp.leaves.dto.RejectLeaveRequest;
 import com.yahya.erphrapp.leaves.entity.LeaveRequest;
 import com.yahya.erphrapp.leaves.service.LeaveRequestService;
-import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Positive;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ConflictException;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.PayslipLineResponse;
@@ -37,12 +38,14 @@ public class PayslipService {
     }
 
     // read one payslip by its id
+    @Transactional(readOnly = true)
     public PayslipResponse getPayslip(Long id) {
         Payslip payslip = payslipRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payslip", id));
         return payslipMapper.toResponse(payslip);
     }
 
     // read all payslips for a specific month by periodCode
+    @Transactional(readOnly = true)
     public Page<PayslipResponse> getPayslipByPeriodCode(String periodCode, Pageable pageable) {
         PayrollPeriod period = payrollPeriodRepository.findByPeriodCode(periodCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Payroll Period", periodCode));
@@ -52,6 +55,7 @@ public class PayslipService {
     }
 
     // read one payslip as lines
+    @Transactional(readOnly = true)
     public List<PayslipLineResponse> getPayslipLines(Long payslipId) {
         // verify the payslip exists
         if (!payslipRepository.existsById(payslipId)) {
@@ -66,6 +70,7 @@ public class PayslipService {
     }
 
     // get all payslips for one employee by employeeID
+    @Transactional(readOnly = true)
     public List<PayslipResponse> getPayslipsByEmployeeId(Long empId) {
         List<Payslip> payslips = payslipRepository.findAllByEmployeeId(empId);
         return payslips.stream().map(payslipMapper::toResponse).toList();

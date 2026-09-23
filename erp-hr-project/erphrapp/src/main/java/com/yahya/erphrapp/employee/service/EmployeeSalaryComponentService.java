@@ -34,6 +34,7 @@ public class EmployeeSalaryComponentService {
     }
 
     // read all salary components for one employee
+    @Transactional(readOnly = true)
     public List<EmployeeSalaryComponentResponse> getComponentsForEmployee(Long empId) {
         return employeeSalaryComponentRepository.findByEmployeeId(empId)
                 .stream()

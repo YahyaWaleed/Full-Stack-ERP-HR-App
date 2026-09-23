@@ -14,7 +14,7 @@ import com.yahya.erphrapp.leaves.mapper.LeaveRequestMapper;
 import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveRequestRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveTypeRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,18 +43,21 @@ public class LeaveRequestService {
     }
 
     // read one leave request by its request id
+    @Transactional(readOnly = true)
     public LeaveRequestResponse getLeaveRequest(Long id) {
         LeaveRequest leaveRequest = leaveRequestRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Leave Request", id));
         return leaveRequestMapper.toResponse(leaveRequest);
     }
 
     // read all leave requests
+    @Transactional(readOnly = true)
     public Page<LeaveRequestResponse> getRequests(Pageable pageable) {
         return leaveRequestRepository.findAllBy(pageable)
                 .map(leaveRequestMapper::toResponse);
     }
 
     // read all leave requests by employee ID
+    @Transactional(readOnly = true)
     public Page<LeaveRequestResponse> getRequestsByEmployeeId(Long empId, Pageable pageable) {
         return leaveRequestRepository.findAllByEmployeeId(empId, pageable)
                 .map(leaveRequestMapper::toResponse);

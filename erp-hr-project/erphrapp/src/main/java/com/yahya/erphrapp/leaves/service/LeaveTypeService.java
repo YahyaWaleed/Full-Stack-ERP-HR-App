@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.leaves.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.leaves.dto.LeaveTypeResponse;
 import com.yahya.erphrapp.leaves.entity.LeaveType;
@@ -21,6 +22,7 @@ public class LeaveTypeService {
     }
 
     // read all leave types
+    @Transactional(readOnly = true)
     public List<LeaveTypeResponse> getLeaveTypes() {
         return leaveTypeRepository.findAll()
                 .stream()
@@ -29,6 +31,7 @@ public class LeaveTypeService {
     }
 
     // read one leave type by its own ID
+    @Transactional(readOnly = true)
     public LeaveTypeResponse getLeaveType(Long id) {
         LeaveType leaveType = leaveTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave Type", id));

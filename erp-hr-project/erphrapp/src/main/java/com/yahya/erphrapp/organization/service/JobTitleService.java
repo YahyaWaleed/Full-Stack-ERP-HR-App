@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.organization.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.organization.dto.JobTitleResponse;
 import com.yahya.erphrapp.organization.entity.JobTitle;
@@ -21,12 +22,14 @@ public class JobTitleService {
     }
 
     // get all job titles
+    @Transactional(readOnly = true)
     public List<JobTitleResponse> getJobTitles() {
         List<JobTitleResponse> titles = jobTitleRepository.findAll().stream().map(jobTitleMapper::toResponse).toList();
         return titles;
     }
 
     // get one job title
+    @Transactional(readOnly = true)
     public JobTitleResponse getJobTitle(Long id) {
         JobTitle title = jobTitleRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Job Title" , id));
         return jobTitleMapper.toResponse(title);

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.PayrollSettingResponse;
 import com.yahya.erphrapp.payroll.entity.PayrollSetting;
@@ -22,6 +23,7 @@ public class PayrollSettingService {
     }
 
     // read all payroll settings (one per fiscal year)
+    @Transactional(readOnly = true)
     public List<PayrollSettingResponse> getSettings() {
         return payrollSettingRepository.findAll()
                 .stream()
@@ -30,6 +32,7 @@ public class PayrollSettingService {
     }
 
     // read the settings for one specific fiscal year
+    @Transactional(readOnly = true)
     public PayrollSettingResponse getSetting(int fiscalYear) {
         PayrollSetting setting = payrollSettingRepository.findById(fiscalYear)
                 .orElseThrow(() -> new ResourceNotFoundException("Payroll Setting", fiscalYear));

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.SalaryComponentResponse;
 import com.yahya.erphrapp.payroll.entity.SalaryComponent;
@@ -22,6 +23,7 @@ public class SalaryComponentService {
     }
 
     // read all salary components (the catalog)
+    @Transactional(readOnly = true)
     public List<SalaryComponentResponse> getComponents() {
         return salaryComponentRepository.findAll()
                 .stream()
@@ -30,6 +32,7 @@ public class SalaryComponentService {
     }
 
     // read one salary component by its own ID
+    @Transactional(readOnly = true)
     public SalaryComponentResponse getComponent(Long id) {
         SalaryComponent component = salaryComponentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Salary Component", id));

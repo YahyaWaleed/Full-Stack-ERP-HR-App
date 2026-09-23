@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.attendance.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.attendance.dto.AttendanceSummaryResponse;
 import com.yahya.erphrapp.attendance.entity.AttendanceSummary;
 import com.yahya.erphrapp.attendance.mapper.AttendanceSummaryMapper;
@@ -19,12 +20,14 @@ public class AttendanceSummaryService {
     }
 
     // read all attendances
+    @Transactional(readOnly = true)
     public List<AttendanceSummaryResponse> getAttendances() {
         List<AttendanceSummary> attendanceSummaries = attendanceSummaryRepository.findAll();
         return  attendanceSummaries.stream().map(attendanceSummaryMapper::toResponse).toList();
     }
 
     // read attendances for one employee
+    @Transactional(readOnly = true)
     public List<AttendanceSummaryResponse> getAttendancesByEmployeeId(Long empId) {
         List<AttendanceSummary> attendanceSummaries = attendanceSummaryRepository.findAllByEmployeeId(empId);
         return  attendanceSummaries.stream().map(attendanceSummaryMapper::toResponse).toList();

@@ -28,12 +28,14 @@ public class EmployeeContractService {
     }
 
     // read one contract
+    @Transactional(readOnly = true)
     public EmployeeContractResponse getContract(Long id) {
         EmployeeContract employeeContract = employeeContractRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee Contract", id));
         return employeeContractMapper.toResponse(employeeContract);
     }
 
     // read all contracts
+    @Transactional(readOnly = true)
     public List<EmployeeContractResponse> getContracts() {
         return employeeContractRepository.findAll().stream().map(employeeContractMapper::toResponse).toList();
     }
@@ -135,6 +137,7 @@ public class EmployeeContractService {
     }
 
 
+    @Transactional(readOnly = true)
     public List<EmployeeContractResponse> getContractsForEmployee(Long empId) {
         return employeeContractRepository.findByEmployeeId(empId)
                 .stream()

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.PayrollPaymentsResponse;
 import com.yahya.erphrapp.payroll.entity.PayrollPayments;
@@ -22,18 +23,21 @@ public class PayrollPaymentsService {
     }
 
     // read a payment by its payment id
+    @Transactional(readOnly = true)
     public PayrollPaymentsResponse getPayment(Long id) {
         PayrollPayments payment = payrollPaymentsRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payroll Payment",id));
         return payrollPaymentsMapper.toResponse(payment);
     }
 
     // read all payments made in a specific period
+    @Transactional(readOnly = true)
     public List<PayrollPaymentsResponse> getPaymentsForPeriod(String periodCode) {
         List<PayrollPayments> payments = payrollPaymentsRepository.findByPayslipPeriodPeriodCode(periodCode);
         return payments.stream().map(payrollPaymentsMapper::toResponse).toList();
     }
 
     // read payment for a specific payslip
+    @Transactional(readOnly = true)
     public PayrollPaymentsResponse getPaymentForPayslip(Long payslipId) {
         PayrollPayments payment = payrollPaymentsRepository.findByPayslipId(payslipId).orElseThrow(() -> new ResourceNotFoundException("Payroll Payment for payslip", payslipId));
         return payrollPaymentsMapper.toResponse(payment);

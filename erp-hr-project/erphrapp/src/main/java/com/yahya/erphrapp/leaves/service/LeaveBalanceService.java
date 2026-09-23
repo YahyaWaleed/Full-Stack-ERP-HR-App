@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.leaves.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.leaves.dto.LeaveBalanceResponse;
 import com.yahya.erphrapp.leaves.dto.LeaveRequestResponse;
@@ -24,6 +25,7 @@ public class LeaveBalanceService {
     }
 
     // read one balance by its own ID
+    @Transactional(readOnly = true)
     public LeaveBalanceResponse getLeaveBalance(Long id) {
         LeaveBalance balance = leaveBalanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave Balance", id));
@@ -31,6 +33,7 @@ public class LeaveBalanceService {
     }
 
     // read all balances for one employee
+    @Transactional(readOnly = true)
     public List<LeaveBalanceResponse> getLeaveBalancesForEmployee(Long empId) {
         return leaveBalanceRepository.findAllByEmployeeId(empId)
                 .stream()

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.organization.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.organization.dto.DepartmentResponse;
 import com.yahya.erphrapp.organization.entity.Department;
@@ -20,12 +21,14 @@ public class DepartmentService {
     }
 
     // get all departments
+    @Transactional(readOnly = true)
     public List<DepartmentResponse> getDepartments() {
         List<DepartmentResponse> departments = departmentRepository.findAllBy().stream().map(departmentMapper::toResponse).toList();
         return departments;
     }
 
     // get one department
+    @Transactional(readOnly = true)
     public DepartmentResponse getDepartment(Long departmentId) {
         return departmentMapper.toResponse(departmentRepository.findById(departmentId).orElseThrow(() -> new ResourceNotFoundException("Department",departmentId)));
     }

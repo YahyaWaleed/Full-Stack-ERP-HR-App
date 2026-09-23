@@ -162,12 +162,14 @@ public class EmployeeService {
 
 
     // read all employees
+    @Transactional(readOnly = true)
     public Page<EmployeeResponse> getEmployees(Pageable pageable) {
         return employeeRepository.findAllBy(pageable)
                 .map(employeeMapper::toResponse);
     }
 
     // read one employee
+    @Transactional(readOnly = true)
     public EmployeeResponse getEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
@@ -244,6 +246,7 @@ public class EmployeeService {
     }
 
     // find all employees in one branch
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> getEmployeesByBranchId(Long branchId) {
         return employeeRepository.findAllByBranchId(branchId)
                 .stream()
@@ -252,6 +255,7 @@ public class EmployeeService {
     }
 
     // find all employees in a department
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> getEmployeesByDeptId(Long deptId) {
         return employeeRepository.findAllByDepartmentId(deptId)
                 .stream()
@@ -260,6 +264,7 @@ public class EmployeeService {
     }
 
     // find all employees with same job title
+    @Transactional(readOnly = true)
     public List<EmployeeResponse> getEmployeesByJobTitleId(Long jobTitleId) {
         return employeeRepository.findAllByJobTitleId(jobTitleId)
                 .stream()

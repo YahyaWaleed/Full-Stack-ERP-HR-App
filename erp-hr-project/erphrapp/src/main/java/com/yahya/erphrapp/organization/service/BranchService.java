@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.organization.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.organization.dto.BranchResponse;
 import com.yahya.erphrapp.organization.entity.Branch;
@@ -23,11 +24,13 @@ public class BranchService {
     }
 
     // get all branches
+    @Transactional(readOnly = true)
     public List<BranchResponse> getBranches() {
         return branchRepository.findAll().stream().map(branchMapper::toResponse).toList();
     }
 
     // get one branch
+    @Transactional(readOnly = true)
     public BranchResponse getBranch(Long branchId) {
         Branch branch = branchRepository.findById(branchId).orElseThrow(() -> new ResourceNotFoundException("Branch", branchId));
         return branchMapper.toResponse(branch);

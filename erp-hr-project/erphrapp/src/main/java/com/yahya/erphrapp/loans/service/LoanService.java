@@ -12,7 +12,7 @@ import com.yahya.erphrapp.loans.mapper.LoanInstallmentMapper;
 import com.yahya.erphrapp.loans.mapper.LoanMapper;
 import com.yahya.erphrapp.loans.repository.LoanInstallmentRepository;
 import com.yahya.erphrapp.loans.repository.LoanRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,18 +38,21 @@ public class LoanService {
     }
 
     // read all loans
+    @Transactional(readOnly = true)
     public Page<LoanResponse> getLoans(Pageable pageable) {
         return loanRepository.findAllBy(pageable)
                 .map(loanMapper::toResponse);
     }
 
     // read all loans for one employee
+    @Transactional(readOnly = true)
     public Page<LoanResponse> getLoansByEmployeeId(Long employeeId, Pageable pageable) {
         return loanRepository.findAllByEmployeeId(employeeId, pageable)
                 .map(loanMapper::toResponse);
     }
 
     // read one loan by loan id
+    @Transactional(readOnly = true)
     public LoanResponse getLoan(Long id) {
         Loan loan = loanRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Loan", id));
         return loanMapper.toResponse(loan);
@@ -98,6 +101,7 @@ public class LoanService {
     }
 
     // read all installments for one loan
+    @Transactional(readOnly = true)
     public List<LoanInstallmentResponse> getInstallmentsForLoan(Long loanId) {
         if (!loanRepository.existsById(loanId)) {
             throw new ResourceNotFoundException("Loan", loanId);

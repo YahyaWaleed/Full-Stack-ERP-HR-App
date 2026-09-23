@@ -33,11 +33,13 @@ public class PayrollPeriodService {
     }
 
     // read all periods
+    @Transactional(readOnly = true)
     public List<PayrollPeriodResponse> getPeriods() {
         return payrollPeriodRepository.findAll().stream().map(payrollPeriodMapper::toResponse).toList();
     }
 
     // read one period by its period code
+    @Transactional(readOnly = true)
     public PayrollPeriodResponse getPeriod(String periodCode) {
         PayrollPeriod period = payrollPeriodRepository.findByPeriodCode(periodCode).orElseThrow(() -> new ResourceNotFoundException("Payroll Period", periodCode));
         return payrollPeriodMapper.toResponse(period);
@@ -45,6 +47,7 @@ public class PayrollPeriodService {
 
 
     // read all periods in the same fiscal year
+    @Transactional(readOnly = true)
     public List<PayrollPeriodResponse> getPeriodsInFiscalYear(int fiscalYear) {
         return payrollPeriodRepository.findByFiscalYear(fiscalYear).stream().map(payrollPeriodMapper::toResponse).toList();
     }
