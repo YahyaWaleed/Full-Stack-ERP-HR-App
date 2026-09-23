@@ -7,12 +7,16 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PayslipRepository extends JpaRepository<Payslip, Long> {
 
     @EntityGraph(attributePaths = {"employee", "period"})
     Page<Payslip> findAllByPeriodId(Long periodId, Pageable pageable);
 
-    List<Payslip> findAllByPeriodId(long periodId);
-    List<Payslip> findAllByEmployeeId(long empId);
+    @EntityGraph(attributePaths = {"employee", "period"})
+    List<Payslip> findAllByEmployeeIdOrderByPeriodStartDateDesc(Long empId);
+
+    @EntityGraph(attributePaths = {"employee", "period"})
+    Optional<Payslip> findById(Long id);
 }

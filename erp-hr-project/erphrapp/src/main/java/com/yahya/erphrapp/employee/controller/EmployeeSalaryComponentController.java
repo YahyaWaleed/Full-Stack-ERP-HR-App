@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// an employee's own salary components, nested under the employee
+// (/salary-components/{id} is the company-wide component catalog)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1/employees/{empId}/salary-components")
 public class EmployeeSalaryComponentController {
 
     private final EmployeeSalaryComponentService employeeSalaryComponentService;
@@ -19,32 +21,29 @@ public class EmployeeSalaryComponentController {
         this.employeeSalaryComponentService = employeeSalaryComponentService;
     }
 
-    // read salary components for one employee
-    @GetMapping("/employees/{empId}/salary-components")
+    @GetMapping
     public List<EmployeeSalaryComponentResponse> getComponentsForEmployee(@PathVariable Long empId) {
         return employeeSalaryComponentService.getComponentsForEmployee(empId);
     }
 
-    // create a salary component for an employee
-    @PostMapping("/employees/{empId}/salary-components")
+    @PostMapping
     @PreAuthorize("hasRole('HR_ADMIN')")
     public EmployeeSalaryComponentResponse createComponent(@PathVariable Long empId,
                                                            @Valid @RequestBody EmployeeSalaryComponentRequest request) {
         return employeeSalaryComponentService.createComponent(empId, request);
     }
 
-    // update a salary component
-    @PatchMapping("/salary-components/{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasRole('HR_ADMIN')")
-    public EmployeeSalaryComponentResponse updateComponent(@PathVariable Long id,
+    public EmployeeSalaryComponentResponse updateComponent(@PathVariable Long empId, @PathVariable Long id,
                                                            @Valid @RequestBody EmployeeSalaryComponentRequest request) {
-        return employeeSalaryComponentService.updateComponent(id, request);
+        return employeeSalaryComponentService.updateComponent(empId, id, request);
     }
 
-    // delete a salary component
-    @DeleteMapping("/salary-components/{id}")
+    // ends the component (or deletes it if it never took effect)
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('HR_ADMIN')")
-    public void deleteComponent(@PathVariable Long id) {
-        employeeSalaryComponentService.deleteComponent(id);
+    public void deleteComponent(@PathVariable Long empId, @PathVariable Long id) {
+        employeeSalaryComponentService.deleteComponent(empId, id);
     }
 }

@@ -1,6 +1,5 @@
 package com.yahya.erphrapp.organization.dto;
 
-import jakarta.validation.constraints.NotBlank;
 
 public class DepartmentResponse {
 

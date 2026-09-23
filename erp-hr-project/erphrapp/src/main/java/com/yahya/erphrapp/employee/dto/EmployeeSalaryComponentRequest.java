@@ -1,6 +1,6 @@
 package com.yahya.erphrapp.employee.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,8 +10,12 @@ public class EmployeeSalaryComponentRequest {
     @NotNull
     private Long compId;
 
+    @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal amount;
 
+    @DecimalMin("0.0")
+    @DecimalMax("100.0")
     private BigDecimal percentage;
 
     @NotNull
@@ -19,6 +23,7 @@ public class EmployeeSalaryComponentRequest {
 
     private LocalDate effectiveTo;
 
+    @Size(max = 150)
     private String notes;
 
     public Long getCompId() { return compId; }

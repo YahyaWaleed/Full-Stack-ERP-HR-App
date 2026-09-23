@@ -1,6 +1,7 @@
 package com.yahya.erphrapp.leaves.entity;
 
 import com.yahya.erphrapp.employee.entity.Employee;
+import com.yahya.erphrapp.exception.ConflictException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -56,7 +57,50 @@ public class LeaveRequest {
     @Column(name = "reject_reason")
     private String rejectReason;
 
+    // document reference for leave types that require an attachment (sick note number, link, ...)
+    @Column(name = "attachment_ref")
+    private String attachmentRef;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private int version;
+
     public LeaveRequest() {}
+
+    // ---- behaviour: only a PENDING request can be decided -----------------
+
+    public void approve(LocalDate today) {
+        requirePending("approve");
+        status = LeaveStatus.APPROVED;
+        decidedOn = today;
+    }
+
+    public void reject(String reason, LocalDate today) {
+        requirePending("reject");
+        status = LeaveStatus.REJECTED;
+        rejectReason = reason;
+        decidedOn = today;
+    }
+
+    public void cancel(LocalDate today) {
+        requirePending("cancel");
+        status = LeaveStatus.CANCELLED;
+        decidedOn = today;
+    }
+
+    public boolean isPending() {
+        return status == LeaveStatus.PENDING;
+    }
+
+    private void requirePending(String action) {
+        if (status != LeaveStatus.PENDING) {
+            throw new ConflictException("Only a PENDING leave request can be " + action + "d (this one is " + status + ")");
+        }
+    }
+
+    public String getAttachmentRef() { return attachmentRef; }
+    public void setAttachmentRef(String attachmentRef) { this.attachmentRef = attachmentRef; }
+    public int getVersion() { return version; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

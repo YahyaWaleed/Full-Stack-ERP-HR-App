@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.employee.service;
 
+import com.yahya.erphrapp.audit.AuditService;
 import com.yahya.erphrapp.employee.dto.EmployeeContractRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeContractResponse;
 import com.yahya.erphrapp.employee.entity.Employee;
@@ -7,24 +8,37 @@ import com.yahya.erphrapp.employee.entity.EmployeeContract;
 import com.yahya.erphrapp.employee.mapper.EmployeeContractMapper;
 import com.yahya.erphrapp.employee.repository.EmployeeContractRepository;
 import com.yahya.erphrapp.employee.repository.EmployeeRepository;
+import com.yahya.erphrapp.exception.BadRequestException;
+import com.yahya.erphrapp.exception.ConflictException;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class EmployeeContractService {
-    // inject repos and mapper
-    private final EmployeeContractMapper employeeContractMapper;
-    private  final EmployeeContractRepository employeeContractRepository;
-    private final EmployeeRepository employeeRepository;
 
-    public EmployeeContractService(EmployeeRepository employeeRepository, EmployeeContractMapper employeeContractMapper, EmployeeContractRepository employeeContractRepository) {
+    private static final int MIN_CONTRACT_MONTHS = 2;
+
+    private final EmployeeContractMapper employeeContractMapper;
+    private final EmployeeContractRepository employeeContractRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ContractNumberGenerator contractNumberGenerator;
+    private final AuditService auditService;
+
+    public EmployeeContractService(EmployeeRepository employeeRepository, EmployeeContractMapper employeeContractMapper,
+                                   EmployeeContractRepository employeeContractRepository,
+                                   ContractNumberGenerator contractNumberGenerator, AuditService auditService) {
         this.employeeContractMapper = employeeContractMapper;
         this.employeeContractRepository = employeeContractRepository;
         this.employeeRepository = employeeRepository;
+        this.contractNumberGenerator = contractNumberGenerator;
+        this.auditService = auditService;
     }
 
     // read one contract
@@ -34,114 +48,104 @@ public class EmployeeContractService {
         return employeeContractMapper.toResponse(employeeContract);
     }
 
-    // read all contracts
+    // read all contracts, one page at a time
     @Transactional(readOnly = true)
-    public List<EmployeeContractResponse> getContracts() {
-        return employeeContractRepository.findAll().stream().map(employeeContractMapper::toResponse).toList();
+    public Page<EmployeeContractResponse> getContracts(Pageable pageable) {
+        return employeeContractRepository.findAllBy(pageable).map(employeeContractMapper::toResponse);
     }
 
-    // update (renew) contract
-    @Transactional
-    public EmployeeContractResponse createContract(Long empId, EmployeeContractRequest employeeContractRequest) {
-        Employee employee = employeeRepository.findById(empId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee", empId));
-
-        // Find the current active contract
-        EmployeeContract oldContract = employeeContractRepository
-                .findByEmployeeIdAndStatus(empId, EmployeeContract.ContractStatus.ACTIVE)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Employee does not have an active contract to renew"
-                ));
-
-        // Validate start date
-        if (employeeContractRequest.getStartDate() == null) {
-            throw new IllegalArgumentException("Start date is required");
-        }
-
-        if (!employeeContractRequest.getStartDate().isAfter(oldContract.getEndDate())) {
-            throw new IllegalArgumentException(
-                    "New contract start date must be after the current contract end date"
-            );
-        }
-
-        // Validate end date
-        if (employeeContractRequest.getEndDate() != null) {
-
-            if (!employeeContractRequest.getEndDate()
-                    .isAfter(employeeContractRequest.getStartDate())) {
-                throw new IllegalArgumentException(
-                        "End date must be after the start date"
-                );
-            }
-
-            // Contract must be at least 2 calendar months long
-            if (employeeContractRequest.getEndDate()
-                    .isBefore(employeeContractRequest.getStartDate().plusMonths(2))) {
-                throw new IllegalArgumentException(
-                        "Contract must be at least 2 months long"
-                );
-            }
-        }
-
-        // Get the number of existing contracts for this employee
-        int renewalNumber = employeeContractRepository.findByEmployeeId(empId).size();
-
-        // Generate contract number
-        int contractYear = employeeContractRequest.getStartDate().getYear();
-
-        String contractNo = String.format(
-                "CT-%d-%04d-%02d",
-                contractYear,
-                empId,
-                renewalNumber
-        );
-
-        // Create the new contract
-        EmployeeContract newContract = new EmployeeContract();
-
-        newContract.setEmployee(employee);
-        newContract.setContractNo(contractNo);
-        newContract.setContractType(
-                EmployeeContract.ContractType.valueOf(
-                        employeeContractRequest.getContractType()
-                )
-        );
-        newContract.setStartDate(employeeContractRequest.getStartDate());
-        newContract.setEndDate(employeeContractRequest.getEndDate());
-        newContract.setBasicSalary(employeeContractRequest.getBasicSalary());
-        newContract.setCurrency(employeeContractRequest.getCurrency());
-        newContract.setWeeklyHours(employeeContractRequest.getWeeklyHours());
-        newContract.setAnnualLeaveDays(employeeContractRequest.getAnnualLeaveDays());
-        newContract.setProbationMonths(employeeContractRequest.getProbationMonths());
-        newContract.setNotes(employeeContractRequest.getNotes());
-        newContract.setStatus(EmployeeContract.ContractStatus.ACTIVE);
-
-        // Close the old contract
-        oldContract.setStatus(EmployeeContract.ContractStatus.EXPIRED);
-        oldContract.setEndDate(
-                employeeContractRequest.getStartDate().minusDays(1)
-        );
-
-        // Save both contracts
-        employeeContractRepository.save(oldContract);
-        employeeContractRepository.save(newContract);
-
-        return employeeContractMapper.toResponse(newContract);
-    }
-    // end a contract
-    @Transactional
-    public void endContract(Long id) {
-        EmployeeContract employeeContract = employeeContractRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee Contract", id));
-        employeeContract.setStatus(EmployeeContract.ContractStatus.TERMINATED);
-        employeeContractRepository.save(employeeContract);
-    }
-
-
+    // an employee's contracts, newest first
     @Transactional(readOnly = true)
     public List<EmployeeContractResponse> getContractsForEmployee(Long empId) {
-        return employeeContractRepository.findByEmployeeId(empId)
+        return employeeContractRepository.findByEmployeeIdOrderByStartDateDesc(empId)
                 .stream()
                 .map(employeeContractMapper::toResponse)
                 .toList();
+    }
+
+    // the first contract, created together with the employee (caller holds the transaction)
+    @Transactional
+    public EmployeeContract createInitial(Employee employee, EmployeeContractRequest request) {
+        validateDates(request);
+        EmployeeContract contract = employeeContractMapper.toEntity(request);
+        contract.setEmployee(employee);
+        contract.setStatus(EmployeeContract.ContractStatus.ACTIVE);
+        contract.setContractNo(contractNumberGenerator.next(employee.getId(), request.getStartDate().getYear()));
+        return employeeContractRepository.save(contract);
+    }
+
+    // renew: the current contract ends the day before the new one starts; its original end date is kept
+    @Transactional
+    public EmployeeContractResponse renewContract(Long empId, EmployeeContractRequest request) {
+        // lock the employee so two renewals can't run at once (contract number + "one active contract")
+        Employee employee = employeeRepository.findByIdForUpdate(empId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", empId));
+        if (employee.isTerminated()) {
+            throw new ConflictException("Cannot renew the contract of a terminated employee");
+        }
+
+        EmployeeContract current = employeeContractRepository
+                .findByEmployeeIdAndStatus(empId, EmployeeContract.ContractStatus.ACTIVE)
+                .orElseThrow(() -> new ConflictException("Employee does not have an active contract to renew"));
+
+        validateDates(request);
+        if (!request.getStartDate().isAfter(current.getStartDate())) {
+            throw new BadRequestException("The new contract must start after the current one started (" + current.getStartDate() + ")");
+        }
+
+        current.closeOn(request.getStartDate().minusDays(1), EmployeeContract.ContractStatus.EXPIRED);
+
+        EmployeeContract renewed = employeeContractMapper.toEntity(request);
+        renewed.setEmployee(employee);
+        renewed.setStatus(EmployeeContract.ContractStatus.ACTIVE);
+        renewed.setContractNo(contractNumberGenerator.next(empId, request.getStartDate().getYear()));
+
+        employeeContractRepository.save(current);
+        employeeContractRepository.save(renewed);
+
+        auditService.record("CONTRACT_RENEWED", "EMPLOYEE", employee.getEmpCode(),
+                "old=" + current.getContractNo() + " new=" + renewed.getContractNo()
+                        + " start=" + renewed.getStartDate() + " basic=" + renewed.getBasicSalary());
+        return employeeContractMapper.toResponse(renewed);
+    }
+
+    // end a contract early (defaults to today)
+    @Transactional
+    public void endContract(Long id, LocalDate endDate) {
+        EmployeeContract contract = employeeContractRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee Contract", id));
+        LocalDate lastDay = endDate != null ? endDate : LocalDate.now();
+        contract.closeOn(lastDay, EmployeeContract.ContractStatus.TERMINATED);
+        employeeContractRepository.save(contract);
+        auditService.record("CONTRACT_ENDED", "CONTRACT", contract.getContractNo(), "lastDay=" + lastDay);
+    }
+
+    // closes the active contract on the termination date, if the employee has one
+    @Transactional
+    public Optional<EmployeeContract> closeActiveOnTermination(Long empId, LocalDate terminationDate) {
+        Optional<EmployeeContract> active = employeeContractRepository.findByEmployeeIdAndStatus(empId, EmployeeContract.ContractStatus.ACTIVE);
+        active.ifPresent(c -> {
+            // a contract that hasn't started yet simply never starts
+            c.closeOn(terminationDate.isBefore(c.getStartDate()) ? c.getStartDate() : terminationDate,
+                    EmployeeContract.ContractStatus.TERMINATED);
+            employeeContractRepository.save(c);
+        });
+        return active;
+    }
+
+    private static void validateDates(EmployeeContractRequest request) {
+        LocalDate start = request.getStartDate();
+        LocalDate end = request.getEndDate();
+        if (end == null) {
+            if (request.getContractType() == EmployeeContract.ContractType.FIXED_TERM) {
+                throw new BadRequestException("A fixed-term contract needs an end date");
+            }
+            return;
+        }
+        if (!end.isAfter(start)) {
+            throw new BadRequestException("End date must be after the start date");
+        }
+        if (end.isBefore(start.plusMonths(MIN_CONTRACT_MONTHS))) {
+            throw new BadRequestException("Contract must be at least " + MIN_CONTRACT_MONTHS + " months long");
+        }
     }
 }

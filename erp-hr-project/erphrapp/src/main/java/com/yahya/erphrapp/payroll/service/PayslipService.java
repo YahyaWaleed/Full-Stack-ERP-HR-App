@@ -1,13 +1,9 @@
 package com.yahya.erphrapp.payroll.service;
 
-import org.springframework.transaction.annotation.Transactional;
-import com.yahya.erphrapp.exception.ConflictException;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.PayslipLineResponse;
 import com.yahya.erphrapp.payroll.dto.PayslipResponse;
 import com.yahya.erphrapp.payroll.entity.PayrollPeriod;
-import com.yahya.erphrapp.payroll.entity.Payslip;
-import com.yahya.erphrapp.payroll.entity.PayslipLine;
 import com.yahya.erphrapp.payroll.mapper.PayslipLineMapper;
 import com.yahya.erphrapp.payroll.mapper.PayslipMapper;
 import com.yahya.erphrapp.payroll.repository.PayrollPeriodRepository;
@@ -16,20 +12,22 @@ import com.yahya.erphrapp.payroll.repository.PayslipRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class PayslipService {
 
-    // inject all needed stuff
     private final PayslipRepository payslipRepository;
     private final PayslipLineRepository payslipLineRepository;
     private final PayslipMapper payslipMapper;
     private final PayslipLineMapper payslipLineMapper;
     private final PayrollPeriodRepository payrollPeriodRepository;
 
-    public PayslipService(PayrollPeriodRepository payrollPeriodRepository, PayslipRepository payslipRepository, PayslipLineRepository payslipLineRepository, PayslipMapper payslipMapper, PayslipLineMapper payslipLineMapper) {
+    public PayslipService(PayrollPeriodRepository payrollPeriodRepository, PayslipRepository payslipRepository,
+                          PayslipLineRepository payslipLineRepository, PayslipMapper payslipMapper,
+                          PayslipLineMapper payslipLineMapper) {
         this.payslipLineRepository = payslipLineRepository;
         this.payslipMapper = payslipMapper;
         this.payslipRepository = payslipRepository;
@@ -40,39 +38,31 @@ public class PayslipService {
     // read one payslip by its id
     @Transactional(readOnly = true)
     public PayslipResponse getPayslip(Long id) {
-        Payslip payslip = payslipRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payslip", id));
-        return payslipMapper.toResponse(payslip);
+        return payslipMapper.toResponse(payslipRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Payslip", id)));
     }
 
-    // read all payslips for a specific month by periodCode
+    // the payslips of one period
     @Transactional(readOnly = true)
-    public Page<PayslipResponse> getPayslipByPeriodCode(String periodCode, Pageable pageable) {
+    public Page<PayslipResponse> getPayslipsByPeriodCode(String periodCode, Pageable pageable) {
         PayrollPeriod period = payrollPeriodRepository.findByPeriodCode(periodCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Payroll Period", periodCode));
-
-        return payslipRepository.findAllByPeriodId(period.getId(), pageable)
-                .map(payslipMapper::toResponse);
+        return payslipRepository.findAllByPeriodId(period.getId(), pageable).map(payslipMapper::toResponse);
     }
 
-    // read one payslip as lines
+    // the lines of one payslip, in print order
     @Transactional(readOnly = true)
     public List<PayslipLineResponse> getPayslipLines(Long payslipId) {
-        // verify the payslip exists
         if (!payslipRepository.existsById(payslipId)) {
             throw new ResourceNotFoundException("Payslip", payslipId);
         }
-
-        // find all payslip lines that have the same payslip id
-        List<PayslipLine> payslipLines = payslipLineRepository.findAllByPayslipId(payslipId);
-
-        // change to response and return
-        return payslipLines.stream().map(payslipLineMapper::toResponse).toList();
+        return payslipLineRepository.findAllByPayslipIdOrderByPrintOrder(payslipId).stream()
+                .map(payslipLineMapper::toResponse).toList();
     }
 
-    // get all payslips for one employee by employeeID
+    // one employee's payslips, newest period first
     @Transactional(readOnly = true)
     public List<PayslipResponse> getPayslipsByEmployeeId(Long empId) {
-        List<Payslip> payslips = payslipRepository.findAllByEmployeeId(empId);
-        return payslips.stream().map(payslipMapper::toResponse).toList();
+        return payslipRepository.findAllByEmployeeIdOrderByPeriodStartDateDesc(empId).stream()
+                .map(payslipMapper::toResponse).toList();
     }
 }

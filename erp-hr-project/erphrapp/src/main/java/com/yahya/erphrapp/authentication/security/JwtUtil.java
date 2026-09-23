@@ -21,6 +21,10 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expirationMs;
 
+    public long getExpirationSeconds() {
+        return expirationMs / 1000;
+    }
+
     // generate the Sign Key used to lock and unlock tokens
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

@@ -48,7 +48,13 @@ public class PayrollPeriod {
     @JoinColumn(name = "approved_by", nullable = true)
     private Employee approvedBy;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private int version;
+
     public PayrollPeriod() {}
+
+    public int getVersion() { return version; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

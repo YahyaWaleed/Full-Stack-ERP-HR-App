@@ -1,9 +1,9 @@
 package com.yahya.erphrapp.organization.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.organization.dto.DepartmentResponse;
-import com.yahya.erphrapp.organization.entity.Department;
 import com.yahya.erphrapp.organization.mapper.DepartmentMapper;
 import com.yahya.erphrapp.organization.repository.DepartmentRepository;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ public class DepartmentService {
     }
 
     // get all departments
+    @Cacheable("departments")
     @Transactional(readOnly = true)
     public List<DepartmentResponse> getDepartments() {
         List<DepartmentResponse> departments = departmentRepository.findAllBy().stream().map(departmentMapper::toResponse).toList();

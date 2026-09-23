@@ -57,4 +57,11 @@ public class LeaveRequestResponse {
 
     public String getRejectReason() { return rejectReason; }
     public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
+
+    private String attachmentRef;
+    private int version;
+    public String getAttachmentRef() { return attachmentRef; }
+    public void setAttachmentRef(String attachmentRef) { this.attachmentRef = attachmentRef; }
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
 }

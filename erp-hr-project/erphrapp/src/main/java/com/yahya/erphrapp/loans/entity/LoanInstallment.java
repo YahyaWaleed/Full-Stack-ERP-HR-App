@@ -1,12 +1,10 @@
 package com.yahya.erphrapp.loans.entity;
 
-import com.yahya.erphrapp.employee.entity.Employee;
 import com.yahya.erphrapp.payroll.entity.Payslip;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "loan_installments")

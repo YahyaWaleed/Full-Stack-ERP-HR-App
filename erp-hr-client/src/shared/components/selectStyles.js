@@ -1,0 +1,37 @@
+// react-select theme that follows the app's CSS variables (light and dark) -- previously copied into seven files
+export const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: 'var(--color-surface)',
+    borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+    color: 'var(--color-text)',
+    minHeight: '42px',
+    borderRadius: '8px',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(96, 165, 250, 0.15)' : 'none',
+    '&:hover': { borderColor: 'var(--color-primary)' },
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (base) => ({ ...base, padding: '4px', backgroundColor: 'var(--color-surface)' }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? 'var(--color-primary)' : state.isFocused ? 'var(--color-bg)' : 'var(--color-surface)',
+    color: state.isSelected ? '#ffffff' : 'var(--color-text)',
+    padding: '10px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    '&:active': { backgroundColor: 'var(--color-primary)' },
+  }),
+  singleValue: (base) => ({ ...base, color: 'var(--color-text)' }),
+  placeholder: (base) => ({ ...base, color: 'var(--color-text-muted)' }),
+  input: (base) => ({ ...base, color: 'var(--color-text)' }),
+  dropdownIndicator: (base) => ({ ...base, color: 'var(--color-text-muted)', '&:hover': { color: 'var(--color-text)' } }),
+  clearIndicator: (base) => ({ ...base, color: 'var(--color-text-muted)', '&:hover': { color: 'var(--color-text)' } }),
+  indicatorSeparator: (base) => ({ ...base, backgroundColor: 'var(--color-border)' }),
+};

@@ -114,4 +114,18 @@ public class LoanResponse {
     public void setApprovedById(Long approvedById) {
         this.approvedById = approvedById;
     }
+
+    private String empCode;
+    private String employeeName;
+    private String approvedByName;
+    private int version;
+
+    public String getEmpCode() { return empCode; }
+    public void setEmpCode(String empCode) { this.empCode = empCode; }
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    public String getApprovedByName() { return approvedByName; }
+    public void setApprovedByName(String approvedByName) { this.approvedByName = approvedByName; }
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
 }

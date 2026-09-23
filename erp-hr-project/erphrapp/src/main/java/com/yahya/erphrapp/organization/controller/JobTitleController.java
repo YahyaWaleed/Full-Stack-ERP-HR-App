@@ -1,7 +1,6 @@
 package com.yahya.erphrapp.organization.controller;
 
 import com.yahya.erphrapp.organization.dto.JobTitleResponse;
-import com.yahya.erphrapp.organization.entity.JobTitle;
 import com.yahya.erphrapp.organization.service.JobTitleService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping("/api/v1/jobs")
 public class JobTitleController {
     // inject the service
     private  final JobTitleService jobTitleService;

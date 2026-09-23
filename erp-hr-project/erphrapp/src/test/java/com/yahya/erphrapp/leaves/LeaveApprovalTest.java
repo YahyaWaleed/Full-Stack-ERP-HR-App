@@ -2,48 +2,39 @@ package com.yahya.erphrapp.leaves;
 
 import com.yahya.erphrapp.AbstractIntegrationTest;
 import com.yahya.erphrapp.exception.ConflictException;
-import com.yahya.erphrapp.leaves.entity.LeaveBalance;
-import com.yahya.erphrapp.leaves.entity.LeaveRequest;
-import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
-import com.yahya.erphrapp.leaves.repository.LeaveRequestRepository;
 import com.yahya.erphrapp.leaves.service.LeaveRequestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+@Transactional
 class LeaveApprovalTest extends AbstractIntegrationTest {
 
     @Autowired
     private LeaveRequestService leaveRequestService;
 
     @Autowired
-    private LeaveRequestRepository leaveRequestRepository;
-
-    @Autowired
-    private LeaveBalanceRepository leaveBalanceRepository;
+    private JdbcTemplate jdbc;
 
     @Test
     void approvingWithInsufficientBalanceThrowsConflict() {
-        // request #6: employee 24, leave type 1 (Annual), 4 days, in fiscal year 2026
-        LeaveRequest request = leaveRequestRepository.findById(6L).orElseThrow();
+        // any pending request on a balance-tracked leave type; empty that balance first
+        Long requestId = jdbc.queryForObject("""
+                SELECT r.request_id FROM leave_requests r JOIN leave_types t ON t.type_id = r.type_id
+                 WHERE r.status = 'PENDING' AND t.affects_balance = 1 ORDER BY r.request_id LIMIT 1""", Long.class);
+        jdbc.update("""
+                UPDATE leave_balances b JOIN leave_requests r
+                    ON r.emp_id = b.emp_id AND r.type_id = b.type_id AND b.fiscal_year = YEAR(r.start_date)
+                   SET b.entitled_days = 0, b.used_days = 0, b.carried_forward = 0
+                 WHERE r.request_id = ?""", requestId);
 
-        // deliberately shrink this employee's real balance below what the request needs,
-        // so the test doesn't depend on guessing seed data numbers that could change
-        LeaveBalance balance = leaveBalanceRepository
-                .findByEmployeeIdAndLeaveTypeIdAndFiscalYear(
-                        request.getEmployee().getId(),
-                        request.getLeaveType().getId(),
-                        2026)
-                .orElseThrow();
-
-        balance.setEntitledDays(BigDecimal.ZERO);
-        balance.setUsedDays(BigDecimal.ZERO);
-        leaveBalanceRepository.save(balance);
-
-        assertThrows(ConflictException.class, () ->
-                leaveRequestService.approveRequest(request.getId()));
+        assertThatThrownBy(() -> leaveRequestService.approveRequest(requestId))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("enough remaining leave balance");
+        TestTransaction.flagForRollback();
     }
 }

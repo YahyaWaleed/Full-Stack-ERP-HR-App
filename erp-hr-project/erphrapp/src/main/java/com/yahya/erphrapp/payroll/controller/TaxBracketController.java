@@ -5,12 +5,13 @@ import com.yahya.erphrapp.payroll.service.TaxBracketService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tax-brackets")
+@RequestMapping("/api/v1/tax-brackets")
 public class TaxBracketController {
 
     private final TaxBracketService taxBracketService;
@@ -19,19 +20,12 @@ public class TaxBracketController {
         this.taxBracketService = taxBracketService;
     }
 
-    // read all tax brackets
+    // all brackets, or one fiscal year: GET /tax-brackets?fiscalYear=2026
     @GetMapping
-    public List<TaxBracketResponse> getBrackets() {
-        return taxBracketService.getBrackets();
+    public List<TaxBracketResponse> getBrackets(@RequestParam(required = false) Integer fiscalYear) {
+        return fiscalYear == null ? taxBracketService.getBrackets() : taxBracketService.getBracketsByFiscalYear(fiscalYear);
     }
 
-    // read tax brackets for one fiscal year
-    @GetMapping("/fiscal-year/{year}")
-    public List<TaxBracketResponse> getBracketsByFiscalYear(@PathVariable int year) {
-        return taxBracketService.getBracketsByFiscalYear(year);
-    }
-
-    // read one tax bracket by its own ID
     @GetMapping("/{id}")
     public TaxBracketResponse getBracket(@PathVariable Long id) {
         return taxBracketService.getBracket(id);

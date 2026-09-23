@@ -3,13 +3,11 @@ package com.yahya.erphrapp.authentication.security;
 
 import com.yahya.erphrapp.authentication.entity.HrUser;
 import com.yahya.erphrapp.authentication.repository.HrUserRepository;
-import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,10 +31,11 @@ public class CustomUserDetailsService implements UserDetailsService
         HrUser hrUser = hrUserRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Invalid username or password"));
 
         // return user details
-        return new User( // translating HrUser to User that spring security understands
-                hrUser.getUsername(),
-                hrUser.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_"+hrUser.getRole().name()))
-        );
+        // a disabled user fails authentication like a wrong password (no hint that the account exists)
+        return User.withUsername(hrUser.getUsername())
+                .password(hrUser.getPassword())
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + hrUser.getRole().name())))
+                .disabled(!hrUser.isEnabled())
+                .build();
     }
 }

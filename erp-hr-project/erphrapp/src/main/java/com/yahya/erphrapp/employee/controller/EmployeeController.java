@@ -1,39 +1,44 @@
 package com.yahya.erphrapp.employee.controller;
 
-import com.yahya.erphrapp.employee.dto.EmployeeContractRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeResponse;
+import com.yahya.erphrapp.employee.dto.TerminateEmployeeRequest;
+import com.yahya.erphrapp.employee.entity.Employee;
 import com.yahya.erphrapp.employee.service.EmployeeService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestBody;
-import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/employees")
+@RequestMapping("/api/v1/employees")
 public class EmployeeController {
 
-    // inject service
     private final EmployeeService employeeService;
+
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;
     }
 
-    // create employee with his contract
+    // create employee with their first contract
     @PostMapping
-    @PreAuthorize("hasRole('HR_ADMIN')") // check that it is admin not normal user
+    @PreAuthorize("hasRole('HR_ADMIN')")
     public EmployeeResponse createEmployee(@Valid @RequestBody EmployeeRequest employeeRequest) {
-        return employeeService.createEmployee(employeeRequest,employeeRequest.getContract());
+        return employeeService.createEmployee(employeeRequest);
     }
 
-    // read all employees
+    // one endpoint for every employee list: GET /employees?branchId=&deptId=&jobId=&status=&managerial=&q=&page=&size=&sort=
     @GetMapping
-    public Page<EmployeeResponse> getEmployees(Pageable pageable) {
-        return employeeService.getEmployees(pageable);
+    public Page<EmployeeResponse> getEmployees(@RequestParam(required = false) Long branchId,
+                                               @RequestParam(required = false) Long deptId,
+                                               @RequestParam(required = false) Long jobId,
+                                               @RequestParam(required = false) Employee.EmployeeStatus status,
+                                               @RequestParam(required = false) Boolean managerial,
+                                               @RequestParam(required = false) String q,
+                                               @PageableDefault(size = 25, sort = "empCode") Pageable pageable) {
+        return employeeService.getEmployees(branchId, deptId, jobId, status, managerial, q, pageable);
     }
 
     // read one employee
@@ -45,34 +50,15 @@ public class EmployeeController {
     // update employee
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('HR_ADMIN')")
-    public EmployeeResponse updateEmployee(@PathVariable Long id,@Valid @RequestBody EmployeeRequest employeeRequest) {
+    public EmployeeResponse updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeRequest employeeRequest) {
         return employeeService.updateEmployee(id, employeeRequest);
     }
 
-    // terminate employee
+    // terminate employee (body optional: { terminationDate, reason })
     @PostMapping("/{id}/terminate")
     @PreAuthorize("hasRole('HR_ADMIN')")
-    public void terminateEmployee(@PathVariable Long id) {
-        employeeService.terminateEmployee(id);
-    }
-
-    // get all employees in one branch
-    @GetMapping("/{id}/employees")
-    public List<EmployeeResponse> getEmployeesByBranch(@PathVariable Long id) {
-        return employeeService.getEmployeesByBranchId(id);
-    }
-
-    // get all employees in one department
-    @GetMapping("/department/{deptId}")
-    public List<EmployeeResponse> getEmployeesByDeptId(@PathVariable Long deptId) {
-        return employeeService.getEmployeesByDeptId(deptId);
-    }
-
-    // get all employees with same job title
-    @GetMapping("/job/{jobTitleId}")
-    public List<EmployeeResponse> getEmployeesByJobTitleId(@PathVariable Long jobTitleId) {
-        return employeeService.getEmployeesByJobTitleId(jobTitleId);
+    public EmployeeResponse terminateEmployee(@PathVariable Long id,
+                                              @Valid @RequestBody(required = false) TerminateEmployeeRequest request) {
+        return employeeService.terminateEmployee(id, request);
     }
 }
-
-

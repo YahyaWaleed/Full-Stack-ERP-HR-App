@@ -1,6 +1,7 @@
 package com.yahya.erphrapp.loans.entity;
 
 import com.yahya.erphrapp.employee.entity.Employee;
+import com.yahya.erphrapp.exception.ConflictException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -56,6 +57,33 @@ public class Loan {
 
     @Column(name = "request_date")
     private LocalDate requestDate;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private int version;
+
+    // ---- behaviour: only an ACTIVE loan can be closed or cancelled (review 10.4) ----
+
+    // settled in full outside payroll
+    public void close() {
+        requireActive("closed");
+        status = LoanStatus.CLOSED;
+        remainingBalance = BigDecimal.ZERO;
+    }
+
+    // withdrawn (e.g. approved by mistake); the remaining balance is kept for the record
+    public void cancel() {
+        requireActive("cancelled");
+        status = LoanStatus.CANCELLED;
+    }
+
+    private void requireActive(String action) {
+        if (status != LoanStatus.ACTIVE) {
+            throw new ConflictException("Only an ACTIVE loan can be " + action + " (this one is " + status + ")");
+        }
+    }
+
+    public int getVersion() { return version; }
 
     public Long getId() {
         return id;

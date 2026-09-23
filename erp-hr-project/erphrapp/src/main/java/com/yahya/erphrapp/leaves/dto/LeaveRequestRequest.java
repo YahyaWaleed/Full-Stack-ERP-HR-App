@@ -1,12 +1,13 @@
 package com.yahya.erphrapp.leaves.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
 public class LeaveRequestRequest {
 
-    @NotNull
+    // the employee comes from the URL (/employees/{empId}/leaves); kept for older clients, ignored if sent
     private Long empId;
 
     @NotNull
@@ -18,7 +19,12 @@ public class LeaveRequestRequest {
     @NotNull
     private LocalDate endDate;
 
+    @Size(max = 200)
     private String reason;
+
+    // required for leave types with requires_attachment (e.g. sick leave): document number or link
+    @Size(max = 255)
+    private String attachmentRef;
 
     public Long getEmpId() { return empId; }
     public void setEmpId(Long empId) { this.empId = empId; }
@@ -34,4 +40,7 @@ public class LeaveRequestRequest {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public String getAttachmentRef() { return attachmentRef; }
+    public void setAttachmentRef(String attachmentRef) { this.attachmentRef = attachmentRef; }
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/salary-components")
+@RequestMapping("/api/v1/salary-components")
 public class SalaryComponentController {
 
     private final SalaryComponentService salaryComponentService;

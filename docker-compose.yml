@@ -1,0 +1,59 @@
+# Whole stack on one machine: MySQL + Spring Boot API + React app (served by nginx).
+#   cp .env.example .env      # then fill in the values
+#   docker compose up --build
+# App: http://localhost:3000   API docs: http://localhost:8080/swagger-ui.html
+services:
+  mysql:
+    image: mysql:8.0
+    command: ["mysqld", "--log-bin-trust-function-creators=1"]  # the schema contains stored functions/triggers
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: erp_hr
+      MYSQL_USER: ${DB_USERNAME:-erp_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3307:3306"   # 3307 on the host so it doesn't clash with a locally installed MySQL
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ./erp-hr-project/erphrapp
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}   # dev loads the demo employees; use prod for an empty company
+      DB_URL: jdbc:mysql://mysql:3306/erp_hr?allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: ${DB_USERNAME:-erp_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?set ADMIN_PASSWORD_HASH in .env}
+      APP_CORS_ORIGINS: http://localhost:3000
+      APP_AUTH_COOKIE_SECURE: "false"   # plain http on localhost; keep true behind HTTPS
+      SERVER_FORWARD_HEADERS_STRATEGY: native   # real client IP from nginx (X-Forwarded-For) for the login lockout
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"   # set BACKEND_PORT in .env if 8080 is taken
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  frontend:
+    build:
+      context: ./erp-hr-client
+      args:
+        VITE_API_URL: /api/v1       # same origin: nginx proxies /api to the backend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql-data:

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.organization.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.organization.dto.JobTitleResponse;
@@ -22,6 +23,7 @@ public class JobTitleService {
     }
 
     // get all job titles
+    @Cacheable("jobTitles")
     @Transactional(readOnly = true)
     public List<JobTitleResponse> getJobTitles() {
         List<JobTitleResponse> titles = jobTitleRepository.findAll().stream().map(jobTitleMapper::toResponse).toList();

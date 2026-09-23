@@ -1,133 +1,102 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './auth/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import HomeOverview from './pages/HomeOverview';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import ErrorBoundary from './shared/components/ErrorBoundary';
+import { AuthProvider } from './features/auth/AuthContext';
+import ProtectedRoute from './features/auth/ProtectedRoute';
+import LoginPage from './features/auth/LoginPage';
+import DashboardLayout from './features/dashboard/DashboardLayout';
+import NotFound from './features/dashboard/NotFound';
 
-// Core Modules
-import Employee from './pages/employees/Employee';
-import EmployeeList from './pages/employees/EmployeeList';
-import EmployeeCreate from './pages/employees/EmployeeCreate';
-import EmployeeDetails from './pages/employees/EmployeeDetails';
-import EmployeeContractRenew from './pages/employees/EmployeeContractRenew';
-import AttendanceList from './pages/attendance/AttendanceList';
-import Leave from './pages/leaves/Leave';
-import LeaveRequestsList from './pages/leaves/LeaveRequestsList';
-import LeaveRequestCreate from './pages/leaves/LeaveRequestCreate';
-import LeaveBalanceList from './pages/leaves/LeaveBalanceList';
-import LeaveRequestDetails from './pages/leaves/LeaveRequestDetails';
-import Loan from './pages/loans/Loan';
-import LoanList from './pages/loans/LoanList';
-import LoanCreate from './pages/loans/LoanCreate';
-import LoanDetails from './pages/loans/LoanDetails';
-import Payroll from './pages/payroll/Payroll';
-import PayrollPeriodList from './pages/payroll/PayrollPeriodList';
-import PayrollPeriodCreate from './pages/payroll/PayrollPeriodCreate';
-import PayrollPeriodDetails from './pages/payroll/PayrollPeriodDetails';
-import PayslipDetails from './pages/payroll/PayslipDetails';
+// every page is its own chunk, downloaded the first time it's opened (review 8.1)
+const HomeOverview = lazy(() => import('./features/dashboard/HomeOverview'));
+const EmployeesHome = lazy(() => import('./features/employees/EmployeesHome'));
+const EmployeeList = lazy(() => import('./features/employees/EmployeeList'));
+const EmployeeCreate = lazy(() => import('./features/employees/EmployeeCreate'));
+const EmployeeEdit = lazy(() => import('./features/employees/EmployeeEdit'));
+const EmployeeDetails = lazy(() => import('./features/employees/EmployeeDetails'));
+const EmployeeContractRenew = lazy(() => import('./features/employees/EmployeeContractRenew'));
+const AttendanceList = lazy(() => import('./features/attendance/AttendanceList'));
+const LeavesHome = lazy(() => import('./features/leaves/LeavesHome'));
+const LeaveRequestsList = lazy(() => import('./features/leaves/LeaveRequestsList'));
+const LeaveRequestCreate = lazy(() => import('./features/leaves/LeaveRequestCreate'));
+const LeaveRequestDetails = lazy(() => import('./features/leaves/LeaveRequestDetails'));
+const LeaveBalanceList = lazy(() => import('./features/leaves/LeaveBalanceList'));
+const LoansHome = lazy(() => import('./features/loans/LoansHome'));
+const LoanList = lazy(() => import('./features/loans/LoanList'));
+const LoanCreate = lazy(() => import('./features/loans/LoanCreate'));
+const LoanDetails = lazy(() => import('./features/loans/LoanDetails'));
+const PayrollHome = lazy(() => import('./features/payroll/PayrollHome'));
+const PayrollPeriodList = lazy(() => import('./features/payroll/PayrollPeriodList'));
+const PayrollPeriodCreate = lazy(() => import('./features/payroll/PayrollPeriodCreate'));
+const PayrollPeriodDetails = lazy(() => import('./features/payroll/PayrollPeriodDetails'));
+const PayslipDetails = lazy(() => import('./features/payroll/PayslipDetails'));
+const BranchList = lazy(() => import('./features/organization/BranchList'));
+const DepartmentList = lazy(() => import('./features/organization/DepartmentList'));
+const JobTitleList = lazy(() => import('./features/organization/JobTitleList'));
+const OrgUnitEmployees = lazy(() => import('./features/organization/OrgUnitEmployees'));
+const ReportsIndex = lazy(() => import('./features/reports/ReportsIndex'));
+const ReportPage = lazy(() => import('./features/reports/ReportPage'));
+const AuditLog = lazy(() => import('./features/audit/AuditLog'));
 
-// Organization Modules
-import BranchList from './pages/organization/BranchList';
-import DepartmentList from './pages/organization/DepartmentList';
-import JobTitleList from './pages/organization/JobTitleList';
-import BranchEmployees from './pages/organization/BranchEmployees';
-import DepartmentEmployees from './pages/organization/DepartmentEmployees';
-import JobTitleEmployees from './pages/organization/JobTitleEmployees';
-
-// Reports
-import Report from './pages/reports/Report';
-import EmployeeDirectoryReport from './pages/reports/EmployeeDirectoryReport';
-import HeadCountByDeptReport from './pages/reports/HeadCountByDeptReport';
-import PayrollRegisterReport from './pages/reports/PayrollRegisterReport';
-import PayrollCostByDeptReport from './pages/reports/PayrollCostByDeptReport';
-import PayrollTrendReport from './pages/reports/PayrollTrendReport';
-import TaxInsuranceLiabilityReport from './pages/reports/TaxInsuranceLiabilityReport';
-import BankTransferReport from './pages/reports/BankTransferReport';
-import LeaveBalancesReport from './pages/reports/LeaveBalancesReport';
-import LeaveRequestLogReport from './pages/reports/LeaveRequestLogReport';
-import OvertimeTopf10Report from './pages/reports/OvertimeTopf10Report';
-import AbsenceWatchlistReport from './pages/reports/AbsenceWatchlistReport';
-import ActiveLoansReport from './pages/reports/ActiveLoansReport';
-import ContractsExpiringReport from './pages/reports/ContractsExpiringReport';
-import TopAttendanceReport from './pages/reports/TopAttendanceReport';
-import TopNetSalaryReport from './pages/reports/TopNetSalaryReport';
-
-import { AuthProvider } from './auth/AuthContext';
-
+// mirrors @PreAuthorize("hasRole('HR_ADMIN')") on the backend
+const admin = (element) => <ProtectedRoute adminOnly>{element}</ProtectedRoute>;
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider >
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <AuthProvider>
+        <ErrorBoundary>
+          <Suspense fallback={<p className="muted page-loading">Loading…</p>}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          {/* Protected Dashboard Shell Route */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          >
-            {/* Default Child Page (Dashboard Overview) */}
-            <Route index element={<HomeOverview />} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                <Route index element={<HomeOverview />} />
 
-            {/* HR Management Sub-routes */}
-            <Route path="employees" element={<Employee />} />
-            <Route path="employees/list" element={<EmployeeList />} />
-            <Route path="employees/create" element={<ProtectedRoute adminOnly><EmployeeCreate /></ProtectedRoute>} />
-            <Route path="employees/:id" element={<EmployeeDetails />} />
-            <Route path="employees/:id/contracts/renew" element={<ProtectedRoute adminOnly><EmployeeContractRenew /></ProtectedRoute>} />
-            <Route path="attendance" element={<AttendanceList />} />
-            <Route path="leaves" element={<Leave />} />
-            <Route path="leaves/list" element={<LeaveRequestsList />} />
-            <Route path="leaves/create" element={<ProtectedRoute adminOnly><LeaveRequestCreate /></ProtectedRoute>} />
-            <Route path="leaves/balances" element={<LeaveBalanceList />} />
-            <Route path="leaves/:id" element={<LeaveRequestDetails />} />
-            <Route path="loans" element={<Loan />} />
-            <Route path="loans/list" element={<LoanList />} />
-            <Route path="loans/create" element={<ProtectedRoute adminOnly><LoanCreate /></ProtectedRoute>} />
-            <Route path="loans/:id" element={<LoanDetails />} />
-            <Route path="payroll" element={<Payroll />} />
-            <Route path="payroll/periods" element={<PayrollPeriodList />} />
-            <Route path="payroll/periods/create" element={<ProtectedRoute adminOnly><PayrollPeriodCreate /></ProtectedRoute>} />
-            <Route path="payroll/periods/:periodCode" element={<PayrollPeriodDetails />} />
-            <Route path="payroll/payslips/:id" element={<ProtectedRoute adminOnly><PayslipDetails /></ProtectedRoute>} />
+                <Route path="employees" element={<EmployeesHome />} />
+                <Route path="employees/list" element={<EmployeeList />} />
+                <Route path="employees/create" element={admin(<EmployeeCreate />)} />
+                <Route path="employees/:id" element={<EmployeeDetails />} />
+                <Route path="employees/:id/edit" element={admin(<EmployeeEdit />)} />
+                <Route path="employees/:id/contracts/renew" element={admin(<EmployeeContractRenew />)} />
+                <Route path="attendance" element={<AttendanceList />} />
 
-            {/* Organization Sub-routes */}
-            <Route path="branches" element={<BranchList />} />
-            <Route path="departments" element={<DepartmentList />} />
-            <Route path="branches/:branchId/employees" element={<BranchEmployees />} />
-            <Route path="departments/:deptId/employees" element={<DepartmentEmployees />} />
-            <Route path="jobs" element={<JobTitleList />} />
-            <Route path="jobs/:jobTitleId/employees" element={<JobTitleEmployees />} />
+                <Route path="leaves" element={<LeavesHome />} />
+                <Route path="leaves/list" element={<LeaveRequestsList />} />
+                <Route path="leaves/create" element={admin(<LeaveRequestCreate />)} />
+                <Route path="leaves/balances" element={<LeaveBalanceList />} />
+                <Route path="leaves/:id" element={<LeaveRequestDetails />} />
 
-            {/* Reports */}
-            <Route path="reports" element={<ProtectedRoute adminOnly><Report /></ProtectedRoute>} />
-            <Route path="reports/employee-directory" element={<ProtectedRoute adminOnly><EmployeeDirectoryReport /></ProtectedRoute>} />
-            <Route path="reports/headcount-by-department" element={<ProtectedRoute adminOnly><HeadCountByDeptReport /></ProtectedRoute>} />
-            <Route path="reports/payroll-register" element={<ProtectedRoute adminOnly><PayrollRegisterReport /></ProtectedRoute>} />
-            <Route path="reports/payroll-cost-by-department" element={<ProtectedRoute adminOnly><PayrollCostByDeptReport /></ProtectedRoute>} />
-            <Route path="reports/payroll-trend" element={<ProtectedRoute adminOnly><PayrollTrendReport /></ProtectedRoute>} />
-            <Route path="reports/tax-insurance-liability" element={<ProtectedRoute adminOnly><TaxInsuranceLiabilityReport /></ProtectedRoute>} />
-            <Route path="reports/bank-transfer" element={<ProtectedRoute adminOnly><BankTransferReport /></ProtectedRoute>} />
-            <Route path="reports/leave-balances" element={<ProtectedRoute adminOnly><LeaveBalancesReport /></ProtectedRoute>} />
-            <Route path="reports/leave-requests" element={<ProtectedRoute adminOnly><LeaveRequestLogReport /></ProtectedRoute>} />
-            <Route path="reports/overtime-top10" element={<ProtectedRoute adminOnly><OvertimeTopf10Report /></ProtectedRoute>} />
-            <Route path="reports/absence-watchlist" element={<ProtectedRoute adminOnly><AbsenceWatchlistReport /></ProtectedRoute>} />
-            <Route path="reports/active-loans" element={<ProtectedRoute adminOnly><ActiveLoansReport /></ProtectedRoute>} />
-            <Route path="reports/contracts-expiring" element={<ProtectedRoute adminOnly><ContractsExpiringReport /></ProtectedRoute>} />
-            <Route path="reports/top-attendance" element={<ProtectedRoute adminOnly><TopAttendanceReport /></ProtectedRoute>} />
-            <Route path="reports/top-net-salary" element={<ProtectedRoute adminOnly><TopNetSalaryReport /></ProtectedRoute>} />
-          </Route>
+                <Route path="loans" element={<LoansHome />} />
+                <Route path="loans/list" element={<LoanList />} />
+                <Route path="loans/create" element={admin(<LoanCreate />)} />
+                <Route path="loans/:id" element={<LoanDetails />} />
 
-          {/* Fallback Catch-all */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+                <Route path="payroll" element={<PayrollHome />} />
+                <Route path="payroll/periods" element={<PayrollPeriodList />} />
+                <Route path="payroll/periods/create" element={admin(<PayrollPeriodCreate />)} />
+                <Route path="payroll/periods/:periodCode" element={<PayrollPeriodDetails />} />
+                <Route path="payroll/payslips/:id" element={admin(<PayslipDetails />)} />
+
+                <Route path="branches" element={<BranchList />} />
+                <Route path="branches/:branchId/employees" element={<OrgUnitEmployees />} />
+                <Route path="departments" element={<DepartmentList />} />
+                <Route path="departments/:deptId/employees" element={<OrgUnitEmployees />} />
+                <Route path="jobs" element={<JobTitleList />} />
+                <Route path="jobs/:jobTitleId/employees" element={<OrgUnitEmployees />} />
+
+                <Route path="reports" element={admin(<ReportsIndex />)} />
+                <Route path="reports/:slug" element={admin(<ReportPage />)} />
+                <Route path="audit" element={admin(<AuditLog />)} />
+
+                <Route path="*" element={<NotFound />} />
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );

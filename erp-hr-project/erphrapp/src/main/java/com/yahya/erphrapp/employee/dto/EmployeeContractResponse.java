@@ -57,4 +57,11 @@ public class EmployeeContractResponse {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    private LocalDate originalEndDate;
+    private int version;
+    public LocalDate getOriginalEndDate() { return originalEndDate; }
+    public void setOriginalEndDate(LocalDate originalEndDate) { this.originalEndDate = originalEndDate; }
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
 }

@@ -1,16 +1,36 @@
-# React + Vite
+# ERP HR & Payroll — web client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite. The API is in `../erp-hr-project`.
 
-Currently, two official plugins are available:
+```bash
+npm install
+npm run dev        # http://localhost:5173, talks to http://localhost:8080/api/v1
+npm test           # Vitest
+npm run lint
+npm run build
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+`VITE_API_URL` points a build at another API (default `http://localhost:8080/api/v1`). With
+`VITE_API_URL=/api/v1` the dev server proxies `/api` to `localhost:8080`, the same way nginx does in Docker.
 
-## React Compiler
+## Layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+  App.jsx                 routes; every page is lazy-loaded (its own chunk)
+  shared/
+    api/client.js         fetch wrapper: access token, one silent refresh + retry on 401, ApiError
+    api/useApi.js         cached, de-duplicated, abortable reads; invalidate(prefix) after writes
+    api/tokenStorage.js   access token in memory only (refresh token is an HttpOnly cookie)
+    components/           DataTable, Pagination, PeriodSelect, EmployeePicker, ErrorBoundary, Breadcrumbs, ...
+  features/
+    auth/                 AuthProvider / useAuth (single source of truth), ProtectedRoute, LoginPage
+    dashboard/            app shell (nav + breadcrumbs), home overview, 404
+    employees/ leaves/ loans/ payroll/ attendance/ organization/ audit/
+                          each with its pages and an api.js for its writes
+    reports/              one ReportPage for every report; columns in reportColumns.jsx
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Roles: routes wrapped in `admin(...)` and nav sections marked `adminOnly` mirror the backend's
+`@PreAuthorize("hasRole('HR_ADMIN')")`. A 401 means the session is over (log in again); a 403 only shows a
+permission message.

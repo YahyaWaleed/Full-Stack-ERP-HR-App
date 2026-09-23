@@ -26,6 +26,12 @@ public class HrUser {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true;
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
     public HrUser() {}
 
     public Long getId() { return id; }

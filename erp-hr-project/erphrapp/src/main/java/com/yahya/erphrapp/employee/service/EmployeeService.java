@@ -1,171 +1,94 @@
 package com.yahya.erphrapp.employee.service;
 
-import com.yahya.erphrapp.employee.dto.EmployeeContractRequest;
+import com.yahya.erphrapp.audit.AuditService;
 import com.yahya.erphrapp.employee.dto.EmployeeRequest;
 import com.yahya.erphrapp.employee.dto.EmployeeResponse;
+import com.yahya.erphrapp.employee.dto.TerminateEmployeeRequest;
 import com.yahya.erphrapp.employee.entity.Employee;
 import com.yahya.erphrapp.employee.entity.EmployeeContract;
 import com.yahya.erphrapp.employee.mapper.EmployeeMapper;
-import com.yahya.erphrapp.employee.repository.EmployeeContractRepository;
 import com.yahya.erphrapp.employee.repository.EmployeeRepository;
+import com.yahya.erphrapp.employee.repository.EmployeeSpecifications;
+import com.yahya.erphrapp.exception.BadRequestException;
+import com.yahya.erphrapp.exception.ConflictException;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
-import com.yahya.erphrapp.leaves.entity.LeaveBalance;
 import com.yahya.erphrapp.leaves.entity.LeaveRequest;
-import com.yahya.erphrapp.leaves.entity.LeaveType;
-import com.yahya.erphrapp.leaves.repository.LeaveBalanceRepository;
 import com.yahya.erphrapp.leaves.repository.LeaveRequestRepository;
-import com.yahya.erphrapp.leaves.repository.LeaveTypeRepository;
-import com.yahya.erphrapp.organization.entity.Branch;
-import com.yahya.erphrapp.organization.entity.Department;
-import com.yahya.erphrapp.organization.entity.JobTitle;
+import com.yahya.erphrapp.leaves.service.LeaveBalanceService;
+import com.yahya.erphrapp.loans.entity.Loan;
+import com.yahya.erphrapp.loans.repository.LoanRepository;
 import com.yahya.erphrapp.organization.repository.BranchRepository;
 import com.yahya.erphrapp.organization.repository.DepartmentRepository;
 import com.yahya.erphrapp.organization.repository.JobTitleRepository;
-import com.yahya.erphrapp.payroll.service.PayrollPeriodService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class EmployeeService {
-    // inject the repo and mapper
+
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final BranchRepository branchRepository;
     private final DepartmentRepository departmentRepository;
-    private  final JobTitleRepository jobTitleRepository;
-    private final EmployeeContractRepository employeeContractRepository;
-    private final LeaveBalanceRepository leaveBalanceRepository;
-    private final LeaveTypeRepository leaveTypeRepository;
+    private final JobTitleRepository jobTitleRepository;
+    private final EmployeeContractService contractService;
+    private final LeaveBalanceService leaveBalanceService;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final LoanRepository loanRepository;
+    private final AuditService auditService;
 
-    private static final Logger log = LoggerFactory.getLogger(PayrollPeriodService.class);
-// inside runPayroll(), after success:
-
-    public EmployeeService(LeaveRequestRepository leaveRequestRepository ,LeaveBalanceRepository leaveBalanceRepository, LeaveTypeRepository leaveTypeRepository, EmployeeMapper employeeMapper, EmployeeRepository employeeRepository, BranchRepository branchRepository, DepartmentRepository departmentRepository, JobTitleRepository jobTitleRepository, EmployeeContractRepository employeeContractRepository) {
-        this.employeeMapper = employeeMapper;
-        this.leaveRequestRepository = leaveRequestRepository;
-        this.leaveBalanceRepository = leaveBalanceRepository;
-        this.leaveTypeRepository = leaveTypeRepository;
+    public EmployeeService(EmployeeRepository employeeRepository, EmployeeMapper employeeMapper,
+                           BranchRepository branchRepository, DepartmentRepository departmentRepository,
+                           JobTitleRepository jobTitleRepository, EmployeeContractService contractService,
+                           LeaveBalanceService leaveBalanceService, LeaveRequestRepository leaveRequestRepository,
+                           LoanRepository loanRepository, AuditService auditService) {
         this.employeeRepository = employeeRepository;
+        this.employeeMapper = employeeMapper;
         this.branchRepository = branchRepository;
         this.departmentRepository = departmentRepository;
         this.jobTitleRepository = jobTitleRepository;
-        this.employeeContractRepository =employeeContractRepository;
+        this.contractService = contractService;
+        this.leaveBalanceService = leaveBalanceService;
+        this.leaveRequestRepository = leaveRequestRepository;
+        this.loanRepository = loanRepository;
+        this.auditService = auditService;
     }
 
+    // create an employee together with their first contract and leave balances -- all or nothing
     @Transactional
-    // create an employee
-    public EmployeeResponse createEmployee(EmployeeRequest employeeRequest, EmployeeContractRequest employeeContractRequest) {
-        Branch branch = branchRepository.findById(employeeRequest.getBranchId()).orElseThrow(() -> new ResourceNotFoundException("Branch",employeeRequest.getBranchId()));
-        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Department" , employeeRequest.getDeptId()));
-        JobTitle title = jobTitleRepository.findById(employeeRequest.getJobId()).orElseThrow(() -> new ResourceNotFoundException("Job Title", employeeRequest.getJobId()));
-
-        Employee manager = null;
-        if (employeeRequest.getManagerId() != null) {
-            manager = employeeRepository.findById(employeeRequest.getManagerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Manager", employeeRequest.getManagerId()));
+    public EmployeeResponse createEmployee(EmployeeRequest request) {
+        if (request.getContract() == null) {
+            throw new BadRequestException("contract: the first contract is required when creating an employee");
         }
-
         Employee employee = new Employee();
-
-        employee.setFullNameAr(employeeRequest.getFullNameAr());
-        employee.setFullNameEn(employeeRequest.getFullNameEn());
-        employee.setAddress(employeeRequest.getAddress());
-        employee.setBankAccount(employeeRequest.getBankAccount());
-        employee.setBankName(employeeRequest.getBankName());
-        employee.setBranch(branch);
-        employee.setBirthDate(employeeRequest.getBirthDate());
-        employee.setNationalId(employeeRequest.getNationalId());
-        employee.setEmail(employeeRequest.getEmail());
-        employee.setDepartment(department);
-        employee.setDependents(employeeRequest.getDependents());
-        employee.setPaymentMethod(Employee.PaymentMethod.valueOf(employeeRequest.getPaymentMethod()));
-        employee.setInsuranceNo(employeeRequest.getInsuranceNo());
-        employee.setHireDate(employeeRequest.getHireDate());
-        employee.setMaritalStatus(Employee.MaritalStatus.valueOf(employeeRequest.getMaritalStatus()));
-        employee.setMobile(employeeRequest.getMobile());
-        employee.setManager(manager);
-        employee.setJobTitle(title);
-        employee.setGender(Employee.Gender.valueOf(employeeRequest.getGender()));
+        applyRequest(employee, request);
         employee.setEmpStatus(Employee.EmployeeStatus.ACTIVE);
-        employee.setEmpCode("TMP-" + UUID.randomUUID().toString().substring(0, 8));
-        employeeRepository.save(employee);
-        employee.setEmpCode(String.format("EMP-%04d", employee.getId()));
+        employeeRepository.saveAndFlush(employee); // one insert; the database assigns emp_code
 
+        EmployeeContract contract = contractService.createInitial(employee, request.getContract());
+        leaveBalanceService.initializeFor(employee, contract.getStartDate().getYear(), contract.getAnnualLeaveDays());
 
-        // create the contract for the employee
-        EmployeeContract employeeContract = new EmployeeContract();
-
-        employeeContract.setAnnualLeaveDays(employeeContractRequest.getAnnualLeaveDays());
-        employeeContract.setBasicSalary(employeeContractRequest.getBasicSalary());
-        employeeContract.setCurrency(employeeContractRequest.getCurrency());
-        employeeContract.setContractType(EmployeeContract.ContractType.valueOf(employeeContractRequest.getContractType()));
-        employeeContract.setEmployee(employee);
-        employeeContract.setNotes(employeeContractRequest.getNotes());
-        employeeContract.setStartDate(employeeContractRequest.getStartDate());
-        employeeContract.setEndDate(employeeContractRequest.getEndDate());
-        employeeContract.setWeeklyHours(employeeContractRequest.getWeeklyHours());
-        employeeContract.setProbationMonths(employeeContractRequest.getProbationMonths());
-        employeeContract.setStatus(EmployeeContract.ContractStatus.ACTIVE);
-        int contractYear = employeeContract.getStartDate().getYear();
-        employeeContract.setContractNo(String.format("CT-%d-%03d", contractYear, employee.getId()));
-
-        employeeContractRepository.save(employeeContract);
-
-        // create the leave balance for the new employee
-        List<LeaveType> leaveTypes = leaveTypeRepository.findAll();
-
-        for (LeaveType leaveType : leaveTypes) {
-
-            // only create balances for leave types that affect the balance
-            if (!leaveType.isAffectsBalance()) {
-                continue;
-            }
-
-            // check gender restriction
-            if (!leaveType.getGenderRestriction().name().equals("ANY")
-                    && !leaveType.getGenderRestriction().name().equals(employee.getGender().name())) {
-                continue;
-            }
-
-            LeaveBalance balance = new LeaveBalance();
-
-            balance.setEmployee(employee);
-            balance.setLeaveType(leaveType);
-            balance.setFiscalYear(employeeContract.getStartDate().getYear());
-
-            // Annual Leave uses the employee's contract entitlement
-            if (leaveType.getCode().equals("ANN")) {
-                balance.setEntitledDays(BigDecimal.valueOf(employeeContract.getAnnualLeaveDays()));
-            } else {
-                balance.setEntitledDays(BigDecimal.valueOf(leaveType.getAnnualQuota()));
-            }
-
-            balance.setCarriedForward(BigDecimal.ZERO);
-            balance.setUsedDays(BigDecimal.ZERO);
-
-            leaveBalanceRepository.save(balance);
-        }
-        employeeRepository.save(employee);
+        auditService.record("EMPLOYEE_CREATED", "EMPLOYEE", employee.getEmpCode(),
+                "contract=" + contract.getContractNo() + " basic=" + contract.getBasicSalary());
         return employeeMapper.toResponse(employee);
     }
 
-
-    // read all employees
+    // list employees; every filter is optional (GET /employees?branchId=&deptId=&jobId=&status=&managerial=&q=)
     @Transactional(readOnly = true)
-    public Page<EmployeeResponse> getEmployees(Pageable pageable) {
-        return employeeRepository.findAllBy(pageable)
-                .map(employeeMapper::toResponse);
+    public Page<EmployeeResponse> getEmployees(Long branchId, Long deptId, Long jobId, Employee.EmployeeStatus status,
+                                               Boolean managerial, String q, Pageable pageable) {
+        boolean admin = isCurrentUserAdmin();
+        return employeeRepository.findAll(EmployeeSpecifications.filter(branchId, deptId, jobId, status, managerial, q), pageable)
+                .map(e -> maskFor(admin, employeeMapper.toResponse(e)));
     }
 
     // read one employee
@@ -173,103 +96,104 @@ public class EmployeeService {
     public EmployeeResponse getEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
-        EmployeeResponse response = employeeMapper.toResponse(employee);
-        if (!isCurrentUserAdmin()) {
+        return maskFor(isCurrentUserAdmin(), employeeMapper.toResponse(employee));
+    }
+
+    // update an employee; if the client sends the version it loaded, a concurrent edit is reported as 409
+    @Transactional
+    public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
+        Employee employee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", id));
+        if (request.getVersion() != null && request.getVersion() != employee.getVersion()) {
+            throw new ObjectOptimisticLockingFailureException(Employee.class, id);
+        }
+        if (request.getManagerId() != null && request.getManagerId().equals(id)) {
+            throw new BadRequestException("An employee cannot be their own manager");
+        }
+        String before = employee.getJobTitle().getTitleEn() + "/" + employee.getDepartment().getNameEn();
+        applyRequest(employee, request);
+        employeeRepository.saveAndFlush(employee);
+
+        auditService.record("EMPLOYEE_UPDATED", "EMPLOYEE", employee.getEmpCode(),
+                "job/dept before=" + before + " after=" + employee.getJobTitle().getTitleEn() + "/" + employee.getDepartment().getNameEn());
+        return employeeMapper.toResponse(employee);
+    }
+
+    // termination as one unit: status + date, active contract closed, pending leave and future approved leave
+    // cancelled (the trigger gives the days back). Outstanding loans must be settled first.
+    @Transactional
+    public EmployeeResponse terminateEmployee(Long id, TerminateEmployeeRequest request) {
+        Employee employee = employeeRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
+        LocalDate date = request != null && request.getTerminationDate() != null ? request.getTerminationDate() : LocalDate.now();
+
+        List<Loan> outstanding = loanRepository.findAllByEmployeeId(id).stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.ACTIVE && l.getRemainingBalance().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+        if (!outstanding.isEmpty()) {
+            BigDecimal owed = outstanding.stream().map(Loan::getRemainingBalance).reduce(BigDecimal.ZERO, BigDecimal::add);
+            throw new ConflictException("Employee still owes " + owed + " on " + outstanding.size()
+                    + " active loan(s) (ids " + outstanding.stream().map(l -> String.valueOf(l.getId())).toList()
+                    + "). Close or cancel them before terminating.");
+        }
+
+        employee.terminate(date);
+        employeeRepository.save(employee);
+
+        Optional<EmployeeContract> contract = contractService.closeActiveOnTermination(id, date);
+
+        int cancelled = 0;
+        for (LeaveRequest leave : leaveRequestRepository.findAllByEmployeeId(id)) {
+            boolean pending = leave.getStatus() == LeaveRequest.LeaveStatus.PENDING;
+            boolean approvedAfterExit = leave.getStatus() == LeaveRequest.LeaveStatus.APPROVED && leave.getStartDate().isAfter(date);
+            if (pending || approvedAfterExit) {
+                leave.setStatus(LeaveRequest.LeaveStatus.CANCELLED);
+                leave.setDecidedOn(LocalDate.now());
+                leaveRequestRepository.save(leave);
+                cancelled++;
+            }
+        }
+
+        auditService.record("EMPLOYEE_TERMINATED", "EMPLOYEE", employee.getEmpCode(),
+                "date=" + date + " contract=" + contract.map(EmployeeContract::getContractNo).orElse("none")
+                        + " leaveCancelled=" + cancelled
+                        + (request != null && request.getReason() != null ? " reason=" + request.getReason() : ""));
+        return employeeMapper.toResponse(employee);
+    }
+
+    // copies the request onto the entity and resolves the referenced branch, department, job title and manager
+    private void applyRequest(Employee employee, EmployeeRequest request) {
+        employeeMapper.copyFields(request, employee);
+        // a blank optional field means "none": stored as NULL, so it never clashes with the UNIQUE email/insurance_no columns
+        employee.setEmail(blankToNull(employee.getEmail()));
+        employee.setInsuranceNo(blankToNull(employee.getInsuranceNo()));
+        employee.setMobile(blankToNull(employee.getMobile()));
+        employee.setAddress(blankToNull(employee.getAddress()));
+        employee.setBankName(blankToNull(employee.getBankName()));
+        employee.setBankAccount(blankToNull(employee.getBankAccount()));
+        employee.setBranch(branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new ResourceNotFoundException("Branch", request.getBranchId())));
+        employee.setDepartment(departmentRepository.findById(request.getDeptId())
+                .orElseThrow(() -> new ResourceNotFoundException("Department", request.getDeptId())));
+        employee.setJobTitle(jobTitleRepository.findById(request.getJobId())
+                .orElseThrow(() -> new ResourceNotFoundException("Job Title", request.getJobId())));
+        employee.setManager(request.getManagerId() == null ? null : employeeRepository.findById(request.getManagerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Manager", request.getManagerId())));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    // HR_USER may see employees but not their bank accounts
+    private static EmployeeResponse maskFor(boolean admin, EmployeeResponse response) {
+        if (!admin) {
             response.setBankAccount(null);
         }
         return response;
     }
 
-    private boolean isCurrentUserAdmin() {
-        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_HR_ADMIN"));
+    private static boolean isCurrentUserAdmin() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_HR_ADMIN"));
     }
-
-    @Transactional
-    // update an employee
-    public EmployeeResponse updateEmployee(Long id, EmployeeRequest employeeRequest) {
-        Employee employee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", id));
-
-        Branch branch = branchRepository.findById(employeeRequest.getBranchId()).orElseThrow(() -> new ResourceNotFoundException("Branch",employeeRequest.getBranchId()));
-        Department department = departmentRepository.findById(employeeRequest.getDeptId()).orElseThrow(() -> new ResourceNotFoundException("Department" , employeeRequest.getDeptId()));
-        JobTitle title = jobTitleRepository.findById(employeeRequest.getJobId()).orElseThrow(() -> new ResourceNotFoundException("Job Title", employeeRequest.getJobId()));
-
-        Employee manager = null;
-        if (employeeRequest.getManagerId() != null) {
-            manager = employeeRepository.findById(employeeRequest.getManagerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Manager", employeeRequest.getManagerId()));
-        }
-
-        employeeRepository.save(employee);
-        employee.setEmpCode(String.format("EMP-%04d", employee.getId()));
-        employee.setFullNameAr(employeeRequest.getFullNameAr());
-        employee.setFullNameEn(employeeRequest.getFullNameEn());
-        employee.setAddress(employeeRequest.getAddress());
-        employee.setBankAccount(employeeRequest.getBankAccount());
-        employee.setBankName(employeeRequest.getBankName());
-        employee.setBranch(branch);
-        employee.setBirthDate(employeeRequest.getBirthDate());
-        employee.setNationalId(employeeRequest.getNationalId());
-        employee.setEmail(employeeRequest.getEmail());
-        employee.setDepartment(department);
-        employee.setDependents(employeeRequest.getDependents());
-        employee.setMaritalStatus(Employee.MaritalStatus.valueOf(employeeRequest.getMaritalStatus()));
-        employee.setPaymentMethod(Employee.PaymentMethod.valueOf(employeeRequest.getPaymentMethod()));
-        employee.setInsuranceNo(employeeRequest.getInsuranceNo());
-        employee.setHireDate(employeeRequest.getHireDate());
-        employee.setMobile(employeeRequest.getMobile());
-        employee.setManager(manager);
-        employee.setJobTitle(title);
-        employee.setGender(Employee.Gender.valueOf(employeeRequest.getGender()));
-
-        employeeRepository.save(employee);
-
-        return employeeMapper.toResponse(employee);
-    }
-
-    // terminate an Employee (sets his contract to TERMINATED
-    @Transactional
-    public void terminateEmployee(Long id) {
-        Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
-        employee.setEmpStatus(Employee.EmployeeStatus.TERMINATED);
-        employeeRepository.save(employee);
-
-        // cancel any pending leave requests
-        leaveRequestRepository.findAllByEmployeeIdAndStatus(id, LeaveRequest.LeaveStatus.PENDING)
-                .forEach(request -> {
-                    request.setStatus(LeaveRequest.LeaveStatus.CANCELLED);
-                    leaveRequestRepository.save(request);
-                });
-
-        log.info("Employee {} terminated", id);
-    }
-
-    // find all employees in one branch
-    @Transactional(readOnly = true)
-    public List<EmployeeResponse> getEmployeesByBranchId(Long branchId) {
-        return employeeRepository.findAllByBranchId(branchId)
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
-    }
-
-    // find all employees in a department
-    @Transactional(readOnly = true)
-    public List<EmployeeResponse> getEmployeesByDeptId(Long deptId) {
-        return employeeRepository.findAllByDepartmentId(deptId)
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
-    }
-
-    // find all employees with same job title
-    @Transactional(readOnly = true)
-    public List<EmployeeResponse> getEmployeesByJobTitleId(Long jobTitleId) {
-        return employeeRepository.findAllByJobTitleId(jobTitleId)
-                .stream()
-                .map(employeeMapper::toResponse)
-                .toList();
-    }
-
 }

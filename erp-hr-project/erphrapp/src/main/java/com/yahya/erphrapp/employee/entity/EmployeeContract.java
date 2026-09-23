@@ -1,5 +1,7 @@
 package com.yahya.erphrapp.employee.entity;
 
+import com.yahya.erphrapp.exception.BadRequestException;
+import com.yahya.erphrapp.exception.ConflictException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -61,7 +63,41 @@ public class EmployeeContract {
     @Column(name = "notes")
     private String notes;
 
+    // the end date the contract was signed with; end_date may later be shortened by a renewal or termination
+    @Column(name = "original_end_date")
+    private LocalDate originalEndDate;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private int version;
+
     public EmployeeContract() {}
+
+    // ---- behaviour -------------------------------------------------------
+
+    public boolean isActive() {
+        return status == ContractStatus.ACTIVE;
+    }
+
+    // closes the contract on lastDay (never extends it), remembering the originally agreed end date
+    public void closeOn(LocalDate lastDay, ContractStatus newStatus) {
+        if (!isActive()) {
+            throw new ConflictException("Contract " + contractNo + " is not active");
+        }
+        if (lastDay.isBefore(startDate)) {
+            throw new BadRequestException("Contract " + contractNo + " cannot end before it starts (" + startDate + ")");
+        }
+        if (originalEndDate == null) {
+            originalEndDate = endDate;
+        }
+        if (endDate == null || lastDay.isBefore(endDate)) {
+            endDate = lastDay;
+        }
+        status = newStatus;
+    }
+
+    public LocalDate getOriginalEndDate() { return originalEndDate; }
+    public int getVersion() { return version; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

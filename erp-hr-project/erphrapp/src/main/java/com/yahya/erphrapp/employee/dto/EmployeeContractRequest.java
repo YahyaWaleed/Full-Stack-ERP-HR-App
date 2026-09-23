@@ -1,8 +1,7 @@
 package com.yahya.erphrapp.employee.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import com.yahya.erphrapp.employee.entity.EmployeeContract;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,7 +9,7 @@ import java.time.LocalDate;
 public class EmployeeContractRequest {
 
     @NotNull
-    private String contractType;
+    private EmployeeContract.ContractType contractType;
 
     @NotNull
     private LocalDate startDate;
@@ -19,20 +18,29 @@ public class EmployeeContractRequest {
 
     @NotNull
     @Positive
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal basicSalary;
 
-    private String currency;
+    @Pattern(regexp = "[A-Z]{3}", message = "must be a 3-letter currency code")
+    private String currency; // defaults to EGP
 
-    private BigDecimal weeklyHours;
+    @DecimalMin("1.0")
+    @DecimalMax("80.0")
+    private BigDecimal weeklyHours; // defaults to 40
 
-    private Integer annualLeaveDays;
+    @Min(0)
+    @Max(60)
+    private Integer annualLeaveDays; // defaults to 21
 
-    private Integer probationMonths;
+    @Min(0)
+    @Max(12)
+    private Integer probationMonths; // defaults to 3
 
+    @Size(max = 255)
     private String notes;
 
-    public String getContractType() { return contractType; }
-    public void setContractType(String contractType) { this.contractType = contractType; }
+    public EmployeeContract.ContractType getContractType() { return contractType; }
+    public void setContractType(EmployeeContract.ContractType contractType) { this.contractType = contractType; }
 
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }

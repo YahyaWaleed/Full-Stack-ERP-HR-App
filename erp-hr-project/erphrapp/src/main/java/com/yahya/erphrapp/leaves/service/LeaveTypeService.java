@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.leaves.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.leaves.dto.LeaveTypeResponse;
@@ -22,6 +23,7 @@ public class LeaveTypeService {
     }
 
     // read all leave types
+    @Cacheable("leaveTypes")
     @Transactional(readOnly = true)
     public List<LeaveTypeResponse> getLeaveTypes() {
         return leaveTypeRepository.findAll()

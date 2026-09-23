@@ -3,7 +3,11 @@ package com.yahya.erphrapp.employee.entity;
 import com.yahya.erphrapp.organization.entity.Branch;
 import com.yahya.erphrapp.organization.entity.Department;
 import com.yahya.erphrapp.organization.entity.JobTitle;
+import com.yahya.erphrapp.exception.BadRequestException;
+import com.yahya.erphrapp.exception.ConflictException;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,8 +21,14 @@ public class Employee {
     @Column(name = "emp_id")
     private Long id;
 
-    @Column(name = "emp_code")
+    // EMP-0001, ... assigned by the trg_employees_code trigger and read back after insert
+    @Generated(event = EventType.INSERT)
+    @Column(name = "emp_code", insertable = false, updatable = false)
     private String empCode;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private int version;
 
     @Column(name = "full_name_ar")
     private String fullNameAr;
@@ -114,6 +124,34 @@ public class Employee {
     private LocalDateTime updatedAt;
 
     public Employee() {}
+
+    // ---- behaviour -------------------------------------------------------
+
+    public boolean isTerminated() {
+        return empStatus == EmployeeStatus.TERMINATED;
+    }
+
+    public boolean isActive() {
+        return empStatus == EmployeeStatus.ACTIVE || empStatus == EmployeeStatus.PROBATION;
+    }
+
+    // marks the employee as terminated on the given date; related records (contract, leave, loans)
+    // are handled by EmployeeService.terminateEmployee
+    public void terminate(LocalDate date) {
+        if (isTerminated()) {
+            throw new ConflictException("Employee " + empCode + " is already terminated");
+        }
+        if (date == null) {
+            throw new BadRequestException("Termination date is required");
+        }
+        if (hireDate != null && date.isBefore(hireDate)) {
+            throw new BadRequestException("Termination date cannot be before the hire date (" + hireDate + ")");
+        }
+        this.empStatus = EmployeeStatus.TERMINATED;
+        this.terminationDate = date;
+    }
+
+    public int getVersion() { return version; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

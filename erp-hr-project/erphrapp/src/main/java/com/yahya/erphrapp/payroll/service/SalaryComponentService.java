@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.SalaryComponentResponse;
@@ -23,6 +24,7 @@ public class SalaryComponentService {
     }
 
     // read all salary components (the catalog)
+    @Cacheable("salaryComponents")
     @Transactional(readOnly = true)
     public List<SalaryComponentResponse> getComponents() {
         return salaryComponentRepository.findAll()

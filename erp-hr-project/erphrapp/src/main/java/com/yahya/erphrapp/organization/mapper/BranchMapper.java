@@ -1,6 +1,5 @@
 package com.yahya.erphrapp.organization.mapper;
 
-import com.yahya.erphrapp.organization.dto.BranchRequest;
 import com.yahya.erphrapp.organization.dto.BranchResponse;
 import com.yahya.erphrapp.organization.entity.Branch;
 import org.mapstruct.Mapper;
@@ -11,5 +10,4 @@ public interface BranchMapper {
 
     BranchResponse toResponse(Branch branch);
 
-    Branch toEntity(BranchRequest request);
 }

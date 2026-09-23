@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/payroll-settings")
+@RequestMapping("/api/v1/payroll-settings")
 public class PayrollSettingController {
 
     private final PayrollSettingService payrollSettingService;

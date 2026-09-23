@@ -1017,3 +1017,156 @@ hr + div > div h3 {
   color: var(--color-text-muted);
   font-size: 0.85rem;
 }
+/* ============================================================
+   Shared layout classes (replace the old inline style={{...}} blocks)
+   ============================================================ */
+
+.app-shell > main.dashboard-content {
+  max-width: 1200px;
+}
+
+.muted { color: var(--color-text-muted); }
+.small { font-size: 0.85rem; }
+.page-loading { padding: 32px; text-align: center; }
+.align-right { text-align: right; }
+th.align-right { text-align: right; }
+
+/* ---- sidebar: active page (review 6.7) ---- */
+.side-nav-section { display: flex; flex-direction: column; gap: 3px; }
+nav a.side-nav-link.active {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.14), rgba(37, 99, 235, 0.04));
+  color: var(--color-primary);
+  font-weight: 600;
+}
+nav a.side-nav-link.active::before { transform: scaleY(1); }
+
+/* ---- breadcrumbs ---- */
+nav.breadcrumbs {
+  display: block;
+  max-width: none;
+  padding: 0;
+  margin: 0 0 16px;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.breadcrumbs ol { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 0.85rem; }
+.breadcrumbs li + li::before { content: "/"; margin-right: 6px; color: var(--color-text-muted); }
+nav.breadcrumbs a { display: inline; padding: 0; font-size: 0.85rem; color: var(--color-primary); }
+nav.breadcrumbs a::before { display: none; }
+nav.breadcrumbs a:hover { background: none; padding: 0; text-decoration: underline; }
+.breadcrumbs [aria-current] { color: var(--color-text-muted); }
+
+/* ---- page action buttons/links ---- */
+.page-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 20px; }
+nav.page-actions { flex-direction: row; max-width: none; }
+.button-link {
+  display: inline-block;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.button-link:hover { text-decoration: none; border-color: var(--color-primary); }
+nav a.button-link::before { display: none; }
+
+/* ---- messages ---- */
+.error-message {
+  background: linear-gradient(145deg, #fff7f7, var(--color-danger-bg));
+  color: var(--color-danger);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+.error-message p { margin: 0; }
+.error-message ul { margin: 6px 0 0; padding-left: 18px; font-size: 0.9rem; }
+.field-error { color: var(--color-danger); font-size: 0.85rem; margin: 4px 0 0; }
+.error-page { padding: 48px 0; }
+
+/* ---- tables ---- */
+.table-wrapper { overflow-x: auto; }
+
+/* ---- filters above lists ---- */
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 8px 0 4px; }
+.filters select { width: auto; min-width: 180px; }
+.filter-wide { flex: 1; min-width: 260px; max-width: 420px; }
+.filter-wide label { margin-top: 0; }
+
+/* ---- forms ---- */
+form.form-grid { max-width: 720px; }
+.form-grid fieldset { border: none; margin: 0 0 18px; padding: 0; }
+.form-grid legend { font-weight: 700; font-size: 1rem; margin-bottom: 8px; color: var(--color-text); }
+.form-actions { margin-top: 12px; }
+form.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  max-width: none;
+  padding: 14px;
+  margin: 12px 0;
+}
+.inline-form label { margin: 0 0 4px; }
+.inline-form > input, .inline-form > select { width: auto; min-width: 150px; }
+.danger-zone { margin-top: 32px; }
+.danger-zone h3 { color: var(--color-danger); }
+
+/* ---- detail pages ---- */
+dl.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-card);
+  max-width: 720px;
+}
+dl.details dt { font-weight: 600; color: var(--color-text-muted); }
+dl.details dd { margin: 0; }
+
+/* ---- report menu ---- */
+.link-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.link-grid a {
+  display: block;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ---- home overview KPI cards (were inline styles) ---- */
+.kpi-row { display: flex; gap: 18px; margin: 26px 0 0; flex-wrap: wrap; }
+button.kpi-card {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-primary);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+button.kpi-card:hover, button.kpi-card.selected { transform: translateY(-3px); background: var(--color-surface); box-shadow: var(--shadow-hover); }
+.kpi-label { color: var(--color-text-muted); font-size: 0.82rem; font-weight: 600; }
+.kpi-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; }
+button.quick-navigation-link { width: 100%; text-align: left; background: none; color: var(--color-primary); border: none; box-shadow: none; }
+
+/* ---- dark theme for the classes above ---- */
+[data-theme="dark"] .error-message { background: #2a1719; border-color: #5b2529; color: #f87171; }
+[data-theme="dark"] dl.details,
+[data-theme="dark"] .link-grid a,
+[data-theme="dark"] button.kpi-card,
+[data-theme="dark"] .button-link { background: var(--color-surface); border-color: var(--color-border); }

@@ -1,5 +1,6 @@
 package com.yahya.erphrapp.payroll.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import com.yahya.erphrapp.exception.ResourceNotFoundException;
 import com.yahya.erphrapp.payroll.dto.TaxBracketResponse;
@@ -22,18 +23,20 @@ public class TaxBracketService {
     }
 
     // read all tax brackets
+    @Cacheable("taxBrackets")
     @Transactional(readOnly = true)
     public List<TaxBracketResponse> getBrackets() {
-        return taxBracketRepository.findAll()
+        return taxBracketRepository.findAllByOrderByPayrollSettingFiscalYearDescFromAmountAsc()
                 .stream()
                 .map(taxBracketMapper::toResponse)
                 .toList();
     }
 
     // read all tax brackets for one fiscal year
+    @Cacheable("taxBracketsByYear")
     @Transactional(readOnly = true)
     public List<TaxBracketResponse> getBracketsByFiscalYear(int fiscalYear) {
-        return taxBracketRepository.findByPayrollSettingFiscalYear(fiscalYear)
+        return taxBracketRepository.findByPayrollSettingFiscalYearOrderByFromAmountAsc(fiscalYear)
                 .stream()
                 .map(taxBracketMapper::toResponse)
                 .toList();

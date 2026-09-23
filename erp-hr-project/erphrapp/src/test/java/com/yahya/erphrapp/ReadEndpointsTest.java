@@ -1,17 +1,9 @@
 package com.yahya.erphrapp;
 
-import com.yahya.erphrapp.authentication.security.JwtUtil;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,35 +11,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 // fails with LazyInitializationException (HTTP 500). Every GET endpoint is hit here with real demo-data ids.
 class ReadEndpointsTest extends AbstractIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
     @Autowired
     private JdbcTemplate jdbc;
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "/api/employees", "/api/employees/{emp}", "/api/employees/{branch}/employees",
-            "/api/employees/department/{dept}", "/api/employees/job/{job}",
-            "/api/employees/{emp}/attendance", "/api/employees/{emp}/contracts",
-            "/api/employees/{emp}/leave-balances", "/api/employees/{emp}/leaves",
-            "/api/employees/{emp}/salary-components", "/api/employees/{emp}/loans",
-            "/api/attendance", "/api/contracts", "/api/contracts/{contract}", "/api/dashboard/summary",
-            "/api/branches", "/api/branches/{branch}", "/api/departments", "/api/departments/{dept}",
-            "/api/jobs", "/api/jobs/{job}",
-            "/api/leaves", "/api/leaves/{leave}", "/api/leave-balances/{balance}",
-            "/api/leave-types", "/api/leave-types/1",
-            "/api/loans", "/api/loans/{loan}", "/api/loans/{loan}/installments",
-            "/api/payroll-periods", "/api/payroll-periods/2026-07", "/api/payroll-periods/fiscal-year/2026",
-            "/api/payroll-periods/2026-07/payments", "/api/payroll-payments/{payment}",
-            "/api/payroll-settings", "/api/payroll-settings/2026",
-            "/api/payslips/employee/{emp}", "/api/payslips/month/2026-07", "/api/payslips/{payslip}",
-            "/api/payslips/{payslip}/lines", "/api/payslips/{payslip}/payment",
-            "/api/salary-components", "/api/salary-components/1",
-            "/api/tax-brackets", "/api/tax-brackets/fiscal-year/2026", "/api/tax-brackets/{bracket}"
+            "/api/v1/employees", "/api/v1/employees/{emp}", "/api/v1/employees?branchId={branch}",
+            "/api/v1/employees?deptId={dept}", "/api/v1/employees?jobId={job}", "/api/v1/employees?managerial=true",
+            "/api/v1/employees?q=ahmed&status=ACTIVE",
+            "/api/v1/employees/{emp}/attendance", "/api/v1/employees/{emp}/contracts",
+            "/api/v1/employees/{emp}/leave-balances", "/api/v1/employees/{emp}/leaves",
+            "/api/v1/employees/{emp}/salary-components", "/api/v1/employees/{emp}/loans",
+            "/api/v1/employees/{emp}/payslips",
+            "/api/v1/attendance", "/api/v1/attendance?periodCode=2026-07",
+            "/api/v1/contracts", "/api/v1/contracts/{contract}", "/api/v1/dashboard/summary",
+            "/api/v1/branches", "/api/v1/branches/{branch}", "/api/v1/departments", "/api/v1/departments/{dept}",
+            "/api/v1/jobs", "/api/v1/jobs/{job}",
+            "/api/v1/leaves", "/api/v1/leaves/{leave}", "/api/v1/leave-balances/{balance}",
+            "/api/v1/leave-types", "/api/v1/leave-types/1",
+            "/api/v1/loans", "/api/v1/loans/{loan}", "/api/v1/loans/{loan}/installments",
+            "/api/v1/payroll-periods", "/api/v1/payroll-periods?fiscalYear=2026", "/api/v1/payroll-periods/2026-07",
+            "/api/v1/payroll-periods/2026-07/payslips", "/api/v1/payroll-periods/2026-07/payments",
+            "/api/v1/payroll-payments/{payment}",
+            "/api/v1/payroll-settings", "/api/v1/payroll-settings/2026",
+            "/api/v1/payslips/{payslip}", "/api/v1/payslips/{payslip}/lines", "/api/v1/payslips/{payslip}/payment",
+            "/api/v1/salary-components", "/api/v1/salary-components/1",
+            "/api/v1/tax-brackets", "/api/v1/tax-brackets?fiscalYear=2026", "/api/v1/tax-brackets/{bracket}",
+            "/api/v1/reports", "/api/v1/audit"
     })
     void readEndpointReturns200(String template) {
         String path = template
@@ -63,15 +53,8 @@ class ReadEndpointsTest extends AbstractIntegrationTest {
                 .replace("{payslip}", id("SELECT MIN(payslip_id) FROM payroll_payments"))
                 .replace("{bracket}", id("SELECT MIN(bracket_id) FROM tax_brackets"));
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwtUtil.generateToken("admin", "HR_ADMIN"));
-        try {
-            var response = new RestTemplate().exchange(
-                    "http://localhost:" + port + path, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-            assertThat(response.getStatusCode()).as(path).isEqualTo(HttpStatus.OK);
-        } catch (HttpStatusCodeException ex) {
-            throw new AssertionError(path + " returned " + ex.getStatusCode() + ": " + ex.getResponseBodyAsString());
-        }
+        Response response = get(path, ADMIN);
+        assertThat(response.status()).as(path + " -> " + response.body()).isEqualTo(200);
     }
 
     private String id(String sql) {
