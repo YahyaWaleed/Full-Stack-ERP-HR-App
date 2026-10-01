@@ -137,3 +137,32 @@ Seed a *dev* database with 5,000+ employees and 12 months of payroll first — N
 mysql -h 127.0.0.1 -u root -p erp_hr < ../load-tests/seed-load-data.sql
 k6 run -e LOAD_TEST_USERNAME=admin -e LOAD_TEST_PASSWORD=... ../load-tests/load-test.js
 ```
+
+### Load test results
+
+Measured 2026-10-01 on a laptop running the whole stack in Docker Compose (MySQL 8, backend, `dev` profile),
+with k6 on the same machine, so client and server compete for CPU. No application code was changed for the test.
+
+- **Dataset:** 5,035 employees (5,000 from `seed-load-data.sql` + 35 demo) and 12 payroll periods (40,409 payslips) at
+  the start. The `hire` scenario adds about 360 employees per run, so later runs started at 5,396 and 5,757.
+- **Load:** up to 50 browsing VUs ramped over 3.5 min, 5 report VUs, and 2 hires/s for 3 min (about 56 VUs at peak).
+
+| Run | browse p95 / p99 (limit 500 ms) | reports p95 / p99 (limit 2000 ms) | writes p95 / p99 (limit 1000 ms) | requests (req/s) | errors |
+|---|---|---|---|---|---|
+| 1. as-is, 5,035 employees | 334 ms / n/a | 400 ms / n/a | 233 ms / n/a | 19,966 (94/s) | 0.00% |
+| 2. with payroll run, 5,396 employees | 358 ms / 514 ms | 453 ms / 614 ms | 296 ms / 367 ms | 19,481 (90/s) | 0.00% |
+| 3. as-is repeat, 5,757 employees | 384 ms / 546 ms | 440 ms / 618 ms | 309 ms / 407 ms | 19,257 (91/s) | 0.00% |
+
+All thresholds passed in all three runs. Run 1 was exported before p99 was enabled.
+
+- **Payroll run:** `POST /payroll-periods/2026-09/run` took **5.3 s** and produced 5,395 payslips. The `2026-09` period and
+  its attendance rows were created before the run (period via the API, attendance via the same SQL as the seed script).
+
+Raw k6 summaries are in `load-tests/results/`. To reproduce (fresh database, backend on port 8080):
+
+```bash
+docker compose down -v && docker compose up -d --build mysql backend
+mysql -h 127.0.0.1 -P 3307 -u root -p erp_hr < ../load-tests/seed-load-data.sql
+k6 run --summary-trend-stats="avg,med,max,p(90),p(95),p(99)" -e LOAD_TEST_USERNAME=admin -e LOAD_TEST_PASSWORD=... \
+  -e RUN_PERIOD=2026-09 ../load-tests/load-test.js   # needs an OPEN 2026-09 period with attendance rows
+```
